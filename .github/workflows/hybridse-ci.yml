@@ -87,11 +87,10 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
-      - name: install swig
+      - name: Install thirdparty
         run: |
           brew install swig
-      - name: Prepare thirdparty
-        run: |
+          brew install bison
           sh tools/install_thirdparty_mac.sh
       - name: Build Core
         run: |
