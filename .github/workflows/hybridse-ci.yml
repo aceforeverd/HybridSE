@@ -79,7 +79,8 @@ jobs:
     name: Build in MacOS
     runs-on: macos-latest
     env:
-      CICD_RUNNER_THIRDPARTY_PATH: /usr/local
+      CICD_RUNNER_THIRDPARTY_PATH: /Users/runner/thirdparty
+      CICD_RUNNER_THIRDSRC_PATH: /Users/runner/thirdsrc
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 8
@@ -90,21 +91,20 @@ jobs:
       - name: Install thirdparty
         run: |
           brew install swig
-          brew install bison
           sh tools/install_thirdparty_mac.sh
       - name: Build Core
         run: |
           ./tools/hybridse_build.sh
-            - name: Core Test
-              run: |
-                ./tools/hybridse_core_test.sh
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: build/*.xml
-          check_name: Cpp Test Report
-          comment_title: Cpp Test Report
+#      - name: Core Test
+#        run: |
+#          ./tools/hybridse_core_test.sh
+#      - name: Publish Unit Test Results
+#        uses: EnricoMi/publish-unit-test-result-action@v1
+#        if: always()
+#        with:
+#          files: build/*.xml
+#          check_name: Cpp Test Report
+#          comment_title: Cpp Test Report
 
 #      - name: Java SDK Test
 #        run: |
