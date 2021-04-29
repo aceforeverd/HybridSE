@@ -31,7 +31,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: cpp-ut-result-${{ github.ref }}
+          name: cpp-ut-result-${{ github.sha }}
           path: |
             build/*.xml
 
@@ -44,7 +44,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: java-ut-result-${{ github.ref }}
+          name: java-ut-result-${{ github.sha }}
           path: |
             java/hybridse-sdk/target/**/TEST-*.xml
 
@@ -86,7 +86,7 @@ jobs:
       - name: Download Cpp Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: cpp-ut-result-${{ github.ref }}
+          name: cpp-ut-result-${{ github.sha }}
           path: cpp-ut-result
 
       - name: Publish Cpp UT Results
@@ -99,7 +99,7 @@ jobs:
       - name: Download Java Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: java-ut-result-${{ github.ref }}
+          name: java-ut-result-${{ github.sha }}
           path: java-ut-result
 
       - name: Publish Java UT Results

@@ -59,13 +59,13 @@ jobs:
       - name: Publish Cpp UT Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          files: actifacts/cpp-ut-result-${{ github.ref }}/**/*.xml
+          files: actifacts/cpp-ut-result-*/**/*.xml
           check_name: Cpp Test Report
           comment_title: Cpp Test Report
 
       - name: Publish Java UT Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          files: actifacts/java-ut-result-${{ github.ref }}/**/*.xml
+          files: actifacts/java-ut-result-*/**/*.xml
           check_name: Java Test Report
           comment_title: Java Test Report
