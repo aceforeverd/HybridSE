@@ -87,6 +87,9 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
+      - name: install swig
+        run: |
+          brew install swig
       - name: Prepare thirdparty
         run: |
           sh tools/install_thirdparty_mac.sh
