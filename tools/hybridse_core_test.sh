@@ -31,7 +31,8 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 if uname -a | grep -q Darwin; then
 	# in case coreutils not install on mac
 	make -j8
-  SQL_CASE_BASE_DIR=${HYRBIDSE_DIR} make -j8 test
+	./src/base/fe_slice_test
+#  SQL_CASE_BASE_DIR=${HYRBIDSE_DIR} make -j8 test
 else
   make -j"$(nproc)"
   SQL_CASE_BASE_DIR=${HYRBIDSE_DIR} make -j"$(nproc)" test
