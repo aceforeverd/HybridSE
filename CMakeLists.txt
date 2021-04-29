@@ -134,6 +134,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif ()
 
 set(boost_libs boost_graph)
+set(yaml-cpp_DIR "${PROJECT_SOURCE_DIR}/thirdparty/")
 find_package(yaml-cpp REQUIRED)
 set(yaml_libs yaml-cpp)
 add_definitions('-g')
