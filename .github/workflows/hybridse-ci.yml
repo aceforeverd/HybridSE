@@ -121,6 +121,7 @@ jobs:
           brew install gflags
           brew install glog
           brew install coreutils
+          brew install yaml-cpp
           sh tools/install_thirdparty_mac.sh
       - name: Build Core
         run: |

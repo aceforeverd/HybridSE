@@ -136,7 +136,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # add_definitions(-Wno-defaulted-function-deleted)
 endif ()
 
-set(yaml-cpp_DIR "${PROJECT_SOURCE_DIR}/thirdparty/")
 find_package(yaml-cpp REQUIRED)
 set(yaml_libs yaml-cpp)
 
