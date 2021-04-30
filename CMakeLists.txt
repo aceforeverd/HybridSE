@@ -13,13 +13,13 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.13)
-
+message(STATUS "CMAKE_VERSION: ${CMAKE_VERSION}")
 if (POLICY CMP0068)
     cmake_policy(SET CMP0068 NEW)
 endif ()
 # Define file(GENERATE) behavior for relative paths.
 if (POLICY CMP0070)
-    cmake_policy(SET CMP0070 NEW)
+    cmake_policy(SET CMP0070 NEW) 
 endif ()
 # target_sources: use absolute path for INTERFACE_SOURCES.
 if (POLICY CMP0076)
@@ -78,6 +78,8 @@ endif ()
 
 find_package(Threads)
 
+set(BOOST_ROOT "${PROJECT_SOURCE_DIR}/thirdparty/")
+find_package(Boost 1.75 COMPONENTS filesystem date_time regex REQUIRED)
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(OS_LIB ${CMAKE_THREAD_LIBS_INIT} rt)
     set(COMMON_LIBS boost_date_time boost_filesystem boost_regex leveldb protobuf glog gflags unwind z snappy ssl crypto dl)
@@ -98,7 +100,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(BRPC_LIBS brpc ${COMMON_LIBS})
 endif ()
 
-set(BOOST_ROOT "${PROJECT_SOURCE_DIR}/thirdparty/")
 configure_file(
         "${PROJECT_SOURCE_DIR}/src/version.h.in"
         "${PROJECT_SOURCE_DIR}/src/hybridse_version.h"
