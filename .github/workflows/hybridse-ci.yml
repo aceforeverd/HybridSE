@@ -93,6 +93,7 @@ jobs:
           brew install swig
           brew install gflags
           brew install glog
+          brew install coreutils
           sh tools/install_thirdparty_mac.sh
       - name: Build Core
         run: |

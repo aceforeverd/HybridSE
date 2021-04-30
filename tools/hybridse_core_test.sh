@@ -22,20 +22,16 @@ HYRBIDSE_DIR=$(pwd)
 # shellcheck disable=SC1091
 source tools/init_env.profile.sh
 
-
+if uname -a | grep -q Darwin; then
+    # in case coreutils not install on mac
+    alias nproc='sysctl -n hw.logicalcpu'
+fi
 
 mkdir -p build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 
-if uname -a | grep -q Darwin; then
-	# in case coreutils not install on mac
-	make -j8
-	./src/base/fe_slice_test
-#  SQL_CASE_BASE_DIR=${HYRBIDSE_DIR} make -j8 test
-else
-  make -j"$(nproc)"
-  SQL_CASE_BASE_DIR=${HYRBIDSE_DIR} make -j"$(nproc)" test
-fi
+make -j"$(nproc)"
+SQL_CASE_BASE_DIR=${HYRBIDSE_DIR} make -j"$(nproc)" test
 
 popd
