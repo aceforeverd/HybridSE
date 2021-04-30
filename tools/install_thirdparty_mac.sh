@@ -15,19 +15,17 @@
 set -e
 
 echo "Install thirdparty for MacOS"
-source ~/.bash_profile
 echo "CICD_RUNNER_THIRDPARTY_PATH: ${CICD_RUNNER_THIRDPARTY_PATH}"
 echo "CICD_RUNNER_THIRDSRC_PATH: ${CICD_RUNNER_THIRDSRC_PATH}"
 
-mkdir ${CICD_RUNNER_THIRDPARTY_PATH}
-mkdir ${CICD_RUNNER_THIRDSRC_PATH}
-pushd ${CICD_RUNNER_THIRDSRC_PATH}
+mkdir "${CICD_RUNNER_THIRDPARTY_PATH}"
+mkdir "${CICD_RUNNER_THIRDSRC_PATH}"
+pushd "${CICD_RUNNER_THIRDSRC_PATH}"
 
 # download thirdparty-mac
 wget -nv --show-progress http://103.3.60.66:8001/thirdparty-mac.tar.gz
-tar xzf thirdparty-mac.tar.gz -C  ${CICD_RUNNER_THIRDPARTY_PATH} --strip-components 1
+tar xzf thirdparty-mac.tar.gz -C  "${CICD_RUNNER_THIRDPARTY_PATH}" --strip-components 1
 echo "list files under ${CICD_RUNNER_THIRDPARTY_PATH}"
-ls ${CICD_RUNNER_THIRDPARTY_PATH}
 
 if [ -f "bison_succ" ]; then
   echo "bison exist"
@@ -35,7 +33,7 @@ else
   wget --no-check-certificate -O bison-3.4.tar.gz http://ftp.gnu.org/gnu/bison/bison-3.4.tar.gz
   tar zxf bison-3.4.tar.gz
   cd bison-3.4
-  ./configure --prefix=${CICD_RUNNER_THIRDPARTY_PATH} && make install
+  ./configure --prefix="${CICD_RUNNER_THIRDPARTY_PATH}" && make install
   cd -
   touch bison_succ
 fi
