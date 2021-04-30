@@ -78,10 +78,11 @@ jobs:
   publish-test-results:
     runs-on: ubuntu-latest
     needs: build
-    # the action will only run on 4paradigm/HybridSE's context
+    # the action will only run on 4paradigm/HybridSE's context, not for fork repo or dependabot
     if: >
-      always() &&
-      github.event.workflow_run.head_repository.full_name == github.repository
+      always() && github.event_name == 'push' || (
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.sender.login != 'dependabot[bot]' )
     steps:
       - name: Download Cpp Artifacts
         uses: actions/download-artifact@v2
