@@ -19,7 +19,7 @@ if (POLICY CMP0068)
 endif ()
 # Define file(GENERATE) behavior for relative paths.
 if (POLICY CMP0070)
-    cmake_policy(SET CMP0070 NEW) 
+    cmake_policy(SET CMP0070 NEW)
 endif ()
 # target_sources: use absolute path for INTERFACE_SOURCES.
 if (POLICY CMP0076)
@@ -78,7 +78,9 @@ endif ()
 
 find_package(Threads)
 
+
 set(BOOST_ROOT "${PROJECT_SOURCE_DIR}/thirdparty/")
+set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.75 COMPONENTS filesystem date_time regex REQUIRED)
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(OS_LIB ${CMAKE_THREAD_LIBS_INIT} rt)
