@@ -66,7 +66,6 @@ then
 else
     # shellcheck disable=SC1090
     source ~/.bash_profile
-    echo "CICD_RUNNER_THIRDPARTY_PATH: ${CICD_RUNNER_THIRDPARTY_PATH}"
     ln -sf "${CICD_RUNNER_THIRDPARTY_PATH}" thirdparty
 fi
 popd
