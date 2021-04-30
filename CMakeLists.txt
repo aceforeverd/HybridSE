@@ -13,7 +13,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.13)
-message(STATUS "CMAKE_VERSION: ${CMAKE_VERSION}")
+
 if (POLICY CMP0068)
     cmake_policy(SET CMP0068 NEW)
 endif ()
@@ -45,11 +45,11 @@ set(HYBRIDSE_VERSION_BUG 2)
 option(TESTING_ENABLE "Enable Test" ON)
 option(CORE_TESTING_ENABLE "Enable Core Test" ON)
 option(EXAMPLES_TESTING_ENABLE "Enable Examples Test" ON)
-option(EXAMPLES_ENABLE "Enable examples" OFF)
 option(BENCHMARK_ENABLE "Enable Benchmark" OFF)
 option(COVERAGE_ENABLE "Enable Coverage" OFF)
 option(PYSDK_ENABLE "Enable pysdk" ON)
 option(JAVASDK_ENABLE "Enable javasdk" ON)
+option(EXAMPLES_ENABLE "Enable examples" OFF)
 option(LLVM_EXT_ENABLE "Enable llvm ext sources" OFF)
 
 if (CMAKE_BUILD_TYPE STREQUAL "")

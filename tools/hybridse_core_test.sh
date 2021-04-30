@@ -23,14 +23,13 @@ HYRBIDSE_DIR=$(pwd)
 source tools/init_env.profile.sh
 
 if uname -a | grep -q Darwin; then
-    # in case coreutils not install on mac
-    alias nproc='sysctl -n hw.logicalcpu'
+	# in case coreutils not install on mac
+	alias nproc='sysctl -n hw.logicalcpu'
 fi
 
 mkdir -p build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-
 make -j"$(nproc)"
 SQL_CASE_BASE_DIR=${HYRBIDSE_DIR} make -j"$(nproc)" test
 

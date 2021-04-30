@@ -75,6 +75,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/4paradigm/hybridsql:latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Fetch Submodules
+        run: |
+          git submodule update --init --recursive
+
+      - name: Build and Coverage
+        run: |
+          ./tools/compile_and_coverage.sh
+
+      # - name: coverage report
+      #   uses: romeovs/lcov-reporter-action@master
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     lcov-file: ./build/coverage.info
+
+      # - name: benchmark
+      #   run: |
+      # cost too much time
+      # bash tools/micro_bench.sh | tee micro_bench_report.txt
+      # bash tools/gen_micro_bench_compare.sh
   macos-build:
     name: Build in MacOS
     runs-on: macos-latest
@@ -119,34 +146,6 @@ jobs:
 #          files: java/hybridse-sdk/target/**/TEST-*.xml
 #          check_name: Java Test Report
 #          comment_title: Java Test Report
-#
-#  coverage:
-#    runs-on: ubuntu-latest
-#    container:
-#      image: ghcr.io/4paradigm/hybridsql:latest
-#
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Fetch Submodules
-#        run: |
-#          git submodule update --init --recursive
-#
-#      - name: Build and Coverage
-#        run: |
-#          ./tools/compile_and_coverage.sh
-
-      # - name: coverage report
-      #   uses: romeovs/lcov-reporter-action@master
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     lcov-file: ./build/coverage.info
-
-      # - name: benchmark
-      #   run: |
-      # cost too much time
-      # bash tools/micro_bench.sh | tee micro_bench_report.txt
-      # bash tools/gen_micro_bench_compare.sh
 
       - name: Cleanup
         if: always()
