@@ -1,5 +1,5 @@
 all:
-	@echo working on it
+	@echo working on it.
 
 lint: cpplint shlint javalint pylint
 
