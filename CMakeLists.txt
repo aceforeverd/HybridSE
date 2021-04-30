@@ -81,7 +81,7 @@ find_package(Threads)
 
 set(BOOST_ROOT "${PROJECT_SOURCE_DIR}/thirdparty/")
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.75 COMPONENTS filesystem date_time regex REQUIRED)
+find_package(Boost COMPONENTS filesystem date_time regex REQUIRED)
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(OS_LIB ${CMAKE_THREAD_LIBS_INIT} rt)
     set(COMMON_LIBS boost_date_time boost_filesystem boost_regex leveldb protobuf glog gflags unwind z snappy ssl crypto dl)
