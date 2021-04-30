@@ -136,9 +136,10 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # add_definitions(-Wno-defaulted-function-deleted)
 endif ()
 
-set(boost_libs boost_graph)
 set(yaml-cpp_DIR "${PROJECT_SOURCE_DIR}/thirdparty/")
+find_package(yaml-cpp REQUIRED)
 set(yaml_libs yaml-cpp)
+
 add_definitions('-g')
 add_definitions('-std=c++14')
 add_definitions(${LLVM_DEFINITIONS})
