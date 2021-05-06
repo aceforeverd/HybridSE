@@ -27,26 +27,26 @@ jobs:
         run: |
           ./tools/hybridse_core_test.sh
 
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+      - name: Upload Cpp UT Results
         if: always()
+        uses: actions/upload-artifact@v2
         with:
-          files: build/*.xml
-          check_name: Cpp Test Report
-          comment_title: Cpp Test Report
+          name: linux-cpp-ut-result-${{ github.sha }}
+          path: |
+            build/*.xml
 
       - name: Java SDK Test
         run: |
           cd java/
           mvn -U clean compile test
 
-      - name: Publish Java Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+      - name: Upload Java UT Results
         if: always()
+        uses: actions/upload-artifact@v2
         with:
-          files: java/hybridse-sdk/target/**/TEST-*.xml
-          check_name: Java Test Report
-          comment_title: Java Test Report
+          name: linux-java-ut-result-${{ github.sha }}
+          path: |
+            java/hybridse-sdk/target/**/TEST-*.xml
 
       - name: Create Archive
         if: ${{ github.event_name == 'push' }}
@@ -75,33 +75,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  coverage:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/4paradigm/hybridsql:latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Fetch Submodules
-        run: |
-          git submodule update --init --recursive
-
-      - name: Build and Coverage
-        run: |
-          ./tools/compile_and_coverage.sh
-
-      # - name: coverage report
-      #   uses: romeovs/lcov-reporter-action@master
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     lcov-file: ./build/coverage.info
-
-      # - name: benchmark
-      #   run: |
-      # cost too much time
-      # bash tools/micro_bench.sh | tee micro_bench_report.txt
-      # bash tools/gen_micro_bench_compare.sh
   macos-build:
     name: Build in MacOS
     runs-on: macos-latest
@@ -129,27 +102,111 @@ jobs:
       - name: Core Test
         run: |
           ./tools/hybridse_core_test.sh
-#      - name: Publish Unit Test Results
-#        uses: EnricoMi/publish-unit-test-result-action@v1
-#        if: always()
-#        with:
-#          files: build/*.xml
-#          check_name: Cpp Test Report
-#          comment_title: Cpp Test Report
+      - name: Upload Cpp UT Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: macos-cpp-ut-result-${{ github.sha }}
+          path: |
+            build/*.xml
       - name: Java SDK Test
         run: |
           cd java/
           mvn -U clean compile test
-#      - name: Publish Java Unit Test Results
-#        uses: EnricoMi/publish-unit-test-result-action@v1
-#        if: always()
-#        with:
-#          files: java/hybridse-sdk/target/**/TEST-*.xml
-#          check_name: Java Test Report
-#          comment_title: Java Test Report
-
-      - name: Cleanup
+      - name: Upload Java UT Results
         if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: macos-java-ut-result-${{ github.sha }}
+          path: |
+            java/hybridse-sdk/target/**/TEST-*.xml
+  publish-test-results:
+    runs-on: ubuntu-latest
+    needs: build
+    # the action will only run on 4paradigm/HybridSE's context, not for fork repo or dependabot
+    if: >
+      always() && github.event_name == 'push' || (
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.sender.login != 'dependabot[bot]' )
+    steps:
+      - name: Download Linux Cpp Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: linux-cpp-ut-result-${{ github.sha }}
+          path: linux-cpp-ut-result
+
+      - name: Publish Linux Cpp UT Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: linux-cpp-ut-result/**/*.xml
+          check_name: Linux Cpp Test Report
+          comment_title: Linux Cpp Test Report
+
+      - name: Download Linux Java Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: linux-java-ut-result-${{ github.sha }}
+          path: linux-java-ut-result
+
+      - name: Publish Linux Java UT Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: linux-java-ut-result/**/*.xml
+          check_name: Linux Java Test Report
+          comment_title: Linux Java Test Report
+      - name: Download Linux Cpp Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: linux-cpp-ut-result-${{ github.sha }}
+          path: linux-cpp-ut-result
+
+      - name: Publish MacOS Cpp UT Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: macos-cpp-ut-result/**/*.xml
+          check_name: MacOS Cpp Test Report
+          comment_title: MacOS Cpp Test Report
+
+      - name: Download MacOS Java Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: macos-java-ut-result-${{ github.sha }}
+          path: macos-java-ut-result
+
+      - name: Publish MacOS Java UT Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: macos-java-ut-result/**/*.xml
+          check_name: MacOS Java Test Report
+          comment_title: MacOS Java Test Report
+
+
+  coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/4paradigm/hybridsql:latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Fetch Submodules
         run: |
-          git clean -dfx
-          git submodule foreach 'rm -rf $displaypath'
+          git submodule update --init --recursive
+
+      - name: Build and Coverage
+        run: |
+          ./tools/compile_and_coverage.sh
+
+      - name: Upload Coverage Report
+        uses: codecov/codecov-action@v1
+        with:
+          files: build/coverage.info
+          name: coverage
+          fail_ci_if_error: true
+          verbose: true
+
+      # - name: benchmark
+      #   run: |
+      # cost too much time
+      # bash tools/micro_bench.sh | tee micro_bench_report.txt
+      # bash tools/gen_micro_bench_compare.sh
