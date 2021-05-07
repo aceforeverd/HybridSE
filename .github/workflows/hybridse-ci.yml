@@ -31,7 +31,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: linux-cpp-ut-result-${{ github.sha }}
+          name: linux-ut-result-cpp-${{ github.sha }}
           path: |
             build/*.xml
 
@@ -44,7 +44,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: linux-java-ut-result-${{ github.sha }}
+          name: linux-ut-result-java-${{ github.sha }}
           path: |
             java/hybridse-sdk/target/**/TEST-*.xml
 
@@ -83,11 +83,13 @@ jobs:
       CICD_RUNNER_THIRDSRC_PATH: /Users/runner/thirdsrc
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up JDK 8
         uses: actions/setup-java@v2
         with:
-          java-version: '8'
-          distribution: 'adopt'
+          java-version: "8"
+          distribution: "adopt"
+
       - name: Install thirdparty
         run: |
           brew install swig
@@ -96,97 +98,61 @@ jobs:
           brew install coreutils
           brew install yaml-cpp
           sh tools/install_thirdparty_mac.sh
+
       - name: Build Core
         run: |
           ./tools/hybridse_build.sh
+
       - name: Core Test
         run: |
           ./tools/hybridse_core_test.sh
+
       - name: Upload Cpp UT Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: macos-cpp-ut-result-${{ github.sha }}
+          name: macos-ut-result-cpp-${{ github.sha }}
           path: |
             build/*.xml
+
       - name: Java SDK Test
         run: |
           cd java/
           mvn -U clean compile test
+
       - name: Upload Java UT Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: macos-java-ut-result-${{ github.sha }}
+          name: macos-ut-result-java-${{ github.sha }}
           path: |
             java/hybridse-sdk/target/**/TEST-*.xml
-  publish-linux-test-results:
+
+  publish-test-results:
     runs-on: ubuntu-latest
-    needs: linux-build
+    needs: ["linux-build", "mac-build"]
     # the action will only run on 4paradigm/HybridSE's context, not for fork repo or dependabot
     if: >
       always() && github.event_name == 'push' || (
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.sender.login != 'dependabot[bot]' )
     steps:
-      - name: Download Linux Cpp Artifacts
+      - name: Download Artifacts
         uses: actions/download-artifact@v2
-        with:
-          name: linux-cpp-ut-result-${{ github.sha }}
-          path: linux-cpp-ut-result
 
-      - name: Publish Linux Cpp UT Results
+      - name: Publish Linux UT Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          files: linux-cpp-ut-result/**/*.xml
-          check_name: Linux Cpp Test Report
-          comment_title: Linux Cpp Test Report
+          files: linux-ut-result-*/**/*.xml
+          check_name: Linux Test Report
+          comment_title: Linux Test Report
 
-      - name: Download Linux Java Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: linux-java-ut-result-${{ github.sha }}
-          path: linux-java-ut-result
-
-      - name: Publish Linux Java UT Results
+      - name: Publish Mac UT Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          files: linux-java-ut-result/**/*.xml
-          check_name: Linux Java Test Report
-          comment_title: Linux Java Test Report
-      - name: Download Linux Cpp Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: linux-cpp-ut-result-${{ github.sha }}
-          path: linux-cpp-ut-result
-  publish-macos-test-results:
-    runs-on: ubuntu-latest
-    needs: macos-build
-    # the action will only run on 4paradigm/HybridSE's context, not for fork repo or dependabot
-    if: >
-      always() && github.event_name == 'push' || (
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.sender.login != 'dependabot[bot]' )
-    steps:
-      - name: Publish MacOS Cpp UT Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: macos-cpp-ut-result/**/*.xml
-          check_name: MacOS Cpp Test Report
-          comment_title: MacOS Cpp Test Report
-
-      - name: Download MacOS Java Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: macos-java-ut-result-${{ github.sha }}
-          path: macos-java-ut-result
-
-      - name: Publish MacOS Java UT Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: macos-java-ut-result/**/*.xml
-          check_name: MacOS Java Test Report
-          comment_title: MacOS Java Test Report
+          files: macos-ut-result-*/**/*.xml
+          check_name: Mac Test Report
+          comment_title: Mac Test Report
 
   coverage:
     runs-on: ubuntu-latest
