@@ -840,17 +840,18 @@ base::Status ConvertQueryExpr(const zetasql::ASTQueryExpression* query_expressio
                     return base::Status::OK();
                 }
                 default: {
-                    return base::Status(common::kSqlError, "Un-support set operation");
+                    return base::Status(common::kSqlError,
+                                        absl::StrCat("Un-support set operation: ", set_op->GetSQLForOperation()));
                 }
             }
         }
         default: {
+            // NOTE: code basically won't reach here unless inner error
             return base::Status(common::kPlanError,
                                 absl::StrCat("can not create query plan node with invalid query type ",
                                              query_expression->GetNodeKindString()));
         }
     }
-    return base::Status::OK();
 }
 
 // ASTCreateTableStatement

@@ -493,6 +493,36 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
           SELECT 1 UNION DISTINCT SELECT 2 UNION DISTINCT SELECT 3;
         END;
         )sql", common::kTypeError, "unknow DataType identifier: unknown_type");
+
+    // unsupport param type
+    expect_converted(R"sql(
+        CREATE PROCEDURE procedure_name(
+            param_c bigint,
+            param_d ARRAY <int>
+        )
+        BEGIN
+          SELECT 1 UNION DISTINCT SELECT 2;
+        END;
+        )sql", common::kSqlError, "Un-support parameter type: ArrayType");
+
+    // unsupport set operation
+    expect_converted(R"sql(
+        CREATE PROCEDURE procedure_name(
+            param_c bigint,
+            param_d string
+        )
+        BEGIN
+          SELECT 1 EXCEPT DISTINCT SELECT 2;
+        END;
+        )sql", common::kSqlError, "Un-support set operation: EXCEPT DISTINCT");
+
+    // unsupport statement type
+    expect_converted(R"sql(
+        CREATE PROCEDURE procedure_name()
+        BEGIN
+          DECLARE ABC INTERVAL;
+        END;
+    )sql", common::kSqlError, "Un-support statement type: VariableDeclaration");
 }
 
 TEST_F(ASTNodeConverterTest, ConvertCreateTableNodeErrorTest) {
