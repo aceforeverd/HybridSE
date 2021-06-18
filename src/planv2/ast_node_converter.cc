@@ -246,8 +246,7 @@ base::Status ConvertExprNode(const zetasql::ASTExpression* ast_expression, node:
             CHECK_TRUE(!literal->is_hex(), common::kSqlError, "Un-support hex integer literal: ", literal->image());
 
             int64_t int_value;
-            CHECK_STATUS(ASTIntLiteralToNum(ast_expression, &int_value),
-                         "Invalid integer literal: ", literal->image());
+            CHECK_STATUS(ASTIntLiteralToNum(ast_expression, &int_value), "Invalid integer literal: ", literal->image());
 
             if (int_value <= INT_MAX && int_value >= INT_MIN) {
                 *output = node_manager->MakeConstNode(static_cast<int>(int_value));
@@ -339,6 +338,26 @@ base::Status ConvertExprNode(const zetasql::ASTExpression* ast_expression, node:
     }
     return status;
 }
+
+base::Status ConvertStmt(const zetasql::ASTStatement* stmt, node::NodeManager* node_manager, node::SqlNode** output) {
+    switch (stmt->node_kind()) {
+        case zetasql::AST_QUERY_STATEMENT: {
+            auto const query_stmt = stmt->GetAsOrNull<zetasql::ASTQueryStatement>();
+            CHECK_TRUE(query_stmt != nullptr, common::kSqlError, "not an ASTQueryStatement");
+            node::QueryNode* query_node = nullptr;
+            CHECK_STATUS(ConvertQueryNode(query_stmt->query(), node_manager, &query_node));
+            *output = query_node;
+            break;
+        }
+        default: {
+            // TODO(aceforeverd): support more statement type
+            return base::Status(common::kSqlError,
+                                absl::StrCat("Un-support statement type: ", stmt->GetNodeKindString()));
+        }
+    }
+    return base::Status::OK();
+}
+
 base::Status ConvertOrderBy(const zetasql::ASTOrderBy* order_by, node::NodeManager* node_manager,
                             node::OrderByNode** output) {
     if (nullptr == order_by) {
@@ -724,11 +743,28 @@ base::Status ConvertQueryNode(const zetasql::ASTQuery* root, node::NodeManager* 
         *output = nullptr;
         return base::Status::OK();
     }
+
     const zetasql::ASTQueryExpression* query_expression = root->query_expr();
     node::OrderByNode* order_by = nullptr;
     CHECK_STATUS(ConvertOrderBy(root->order_by(), node_manager, &order_by));
     node::SqlNode* limit = nullptr;
     CHECK_STATUS(ConvertLimitOffsetNode(root->limit_offset(), node_manager, &limit));
+
+    node::QueryNode* query_node = nullptr;
+    CHECK_STATUS(ConvertQueryExpr(query_expression, node_manager, &query_node));
+    // HACK: set SelectQueryNode's limit and order
+    //   UnionQueryNode do not match zetasql's union stmt
+    if (query_node->query_type_ == node::kQuerySelect) {
+        auto select_query_node = static_cast<node::SelectQueryNode*>(query_node);
+        select_query_node->SetLimit(limit);
+        select_query_node->SetOrder(order_by);
+    }
+    *output = query_node;
+    return base::Status::OK();
+}
+
+base::Status ConvertQueryExpr(const zetasql::ASTQueryExpression* query_expression, node::NodeManager* node_manager,
+                              node::QueryNode** output) {
     switch (query_expression->node_kind()) {
         case zetasql::AST_SELECT: {
             auto select_query = query_expression->GetAsOrNull<zetasql::ASTSelect>();
@@ -764,15 +800,42 @@ base::Status ConvertQueryNode(const zetasql::ASTQuery* root, node::NodeManager* 
             if (nullptr != select_query->window_clause()) {
                 CHECK_STATUS(ConvertWindowClause(select_query->window_clause(), node_manager, &window_list_ptr))
             }
-            *output = node_manager->MakeSelectQueryNode(is_distinct, select_list_ptr, tableref_list_ptr, where_expr,
-                                                        group_expr_list, having_expr, order_by, window_list_ptr, limit);
+            *output =
+                node_manager->MakeSelectQueryNode(is_distinct, select_list_ptr, tableref_list_ptr, where_expr,
+                                                  group_expr_list, having_expr, nullptr, window_list_ptr, nullptr);
             return base::Status::OK();
         }
+        case zetasql::AST_SET_OPERATION: {
+            const auto set_op = query_expression->GetAsOrNull<zetasql::ASTSetOperation>();
+            CHECK_TRUE(set_op != nullptr, common::kSqlError, "not an ASTSetOperation");
+            switch (set_op->op_type()) {
+                case zetasql::ASTSetOperation::OperationType::UNION: {
+                    CHECK_TRUE(set_op->inputs().size() >= 2, common::kSqlError,
+                               "Union Set Operation have inputs size less than 2");
+                    bool is_distinct = set_op->distinct();
+                    node::QueryNode* left = nullptr;
+                    CHECK_STATUS(ConvertQueryExpr(set_op->inputs().at(0), node_manager, &left));
+
+                    for (int i = 1; i < set_op->inputs().size(); ++i) {
+                        auto input = set_op->inputs().at(i);
+                        node::QueryNode* expr_node = nullptr;
+                        // TODO(aceforeverd): support set operation
+                        CHECK_STATUS(ConvertQueryExpr(input, node_manager, &expr_node));
+                        left = node_manager->MakeUnionQueryNode(left, expr_node, !is_distinct);
+                    }
+
+                    *output = left;
+                    return base::Status::OK();
+                }
+                default: {
+                    return base::Status(common::kSqlError, "Un-support set operation");
+                }
+            }
+        }
         default: {
-            status.msg =
-                "can not create query plan node with invalid query type " + query_expression->GetNodeKindString();
-            status.code = common::kPlanError;
-            return status;
+            return base::Status(common::kPlanError,
+                                absl::StrCat("can not create query plan node with invalid query type ",
+                                             query_expression->GetNodeKindString()));
         }
     }
     return base::Status::OK();
@@ -821,6 +884,27 @@ base::Status ConvertCreateTableNode(const zetasql::ASTCreateTableStatement* ast_
     *output = static_cast<node::CreateStmt*>(
         node_manager->MakeCreateTableNode(if_not_exist, table_name, column_desc_list, option_list));
 
+    return base::Status::OK();
+}
+
+// ASTCreateProcedureStatement(name, parameters, body)
+//   -> CreateSpStmt(name, parameters, body)
+base::Status ConvertCreateProcedureNode(const zetasql::ASTCreateProcedureStatement* ast_create_sp_stmt,
+                                        node::NodeManager* node_manager, node::CreateSpStmt** output) {
+    std::string sp_name;
+    CHECK_STATUS(AstPathExpressionToString(ast_create_sp_stmt->name(), &sp_name));
+
+    node::SqlNodeList* procedure_parameters = nullptr;
+    for (const auto param : ast_create_sp_stmt->parameters()->parameter_entries()) {
+        node::SqlNode* param_node = nullptr;
+        CHECK_STATUS(ConvertParamters(param, node_manager, &param_node));
+        procedure_parameters->PushBack(param_node);
+    }
+
+    node::SqlNode* body = nullptr;
+    CHECK_STATUS(ConvertProcedureBody(ast_create_sp_stmt->body(), node_manager, &body));
+
+    node_manager->MakeCreateProcedureNode(sp_name, procedure_parameters, body);
     return base::Status::OK();
 }
 
@@ -1085,7 +1169,56 @@ base::Status ConvertTableOption(const zetasql::ASTOptionsEntry* entry, node::Nod
     return base::Status::OK();
 }
 
-// transform zetasql::ASTPathExpression into string
+base::Status ConvertParamters(const zetasql::ASTFunctionParameter* param, node::NodeManager* node_manager,
+                              node::SqlNode** output) {
+    bool is_constant = param->is_constant();
+    std::string column_name = param->name()->GetAsString();
+
+    // convert type
+    // NOTE: only handle <type_> in ASTFunctionParameter here.
+    //   consider handle <templated_parameter_type_>, <tvf_schema_>, <alias_> in the future,
+    //   <templated_parameter_type_> and <tvf_schema_> is another syntax for procedure parameter,
+    //   <alias_> is the additional syntax for function parameter
+    node::DataType data_type;
+
+    // only one of <type_>, <templated_parameter_type_>, <tvf_schema_> is not null
+    if (param->type() != nullptr) {
+        switch (param->type()->node_kind()) {
+            case zetasql::AST_SIMPLE_TYPE: {
+                const auto param_type = param->type()->GetAsOrNull<zetasql::ASTSimpleType>();
+                CHECK_TRUE(param_type != nullptr, common::kSqlError, "not an ASTSimpleType");
+
+                std::string type_name;
+                CHECK_STATUS(AstPathExpressionToString(param_type->type_name(), &type_name));
+                CHECK_STATUS(node::StringToDataType(type_name, &data_type));
+                *output = node_manager->MakeInputParameterNode(is_constant, column_name, data_type);
+                return base::Status::OK();
+            }
+            default: {
+                return base::Status(common::kSqlError,
+                                    absl::StrCat("Un-support parameter type: ", param->type()->GetNodeKindString()));
+            }
+        }
+    }
+
+    return base::Status(common::kSqlError, "Un-support templated_parameter or tvf_schema type");
+}
+
+// NOTE: convert select stmt or union stmt only
+base::Status ConvertProcedureBody(const zetasql::ASTScript* body, node::NodeManager* node_manager,
+                                  node::SqlNode** output) {
+    // HACK: HybridSE's procedure body support only one query statement
+    auto out_list = node_manager->MakeNodeList();
+    for (const auto stmt : body->statement_list()) {
+        node::SqlNode* stmt_node = nullptr;
+        CHECK_STATUS(ConvertStmt(stmt, node_manager, &stmt_node));
+        out_list->PushBack(stmt_node);
+    }
+    *output = out_list;
+    return base::Status::OK();
+}
+
+// transform zetasql::ASTStringLiteral into string
 base::Status AstStringLiteralToString(const zetasql::ASTExpression* ast_expr, std::string* str) {
     auto string_literal = ast_expr->GetAsOrNull<zetasql::ASTStringLiteral>();
     CHECK_TRUE(string_literal != nullptr, common::kPlanError, "not an ASTStringLiteral");
