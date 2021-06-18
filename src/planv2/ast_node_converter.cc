@@ -349,6 +349,18 @@ base::Status ConvertStmt(const zetasql::ASTStatement* stmt, node::NodeManager* n
             *output = query_node;
             break;
         }
+        case zetasql::AST_BEGIN_END_BLOCK: {
+            auto const begin_end_block = stmt->GetAsOrNull<zetasql::ASTBeginEndBlock>();
+            CHECK_TRUE(begin_end_block != nullptr, common::kSqlError, "not and ASTBeginEndBlock");
+            node::SqlNodeList* stmt_node_list = node_manager->MakeNodeList();
+            for (const auto sub_stmt : begin_end_block->statement_list()) {
+                node::SqlNode* stmt_node = nullptr;
+                CHECK_STATUS(ConvertStmt(sub_stmt, node_manager, &stmt_node));
+                stmt_node_list->PushBack(stmt_node);
+            }
+            *output = stmt_node_list;
+            break;
+        }
         default: {
             // TODO(aceforeverd): support more statement type
             return base::Status(common::kSqlError,
@@ -816,7 +828,7 @@ base::Status ConvertQueryExpr(const zetasql::ASTQueryExpression* query_expressio
                     node::QueryNode* left = nullptr;
                     CHECK_STATUS(ConvertQueryExpr(set_op->inputs().at(0), node_manager, &left));
 
-                    for (int i = 1; i < set_op->inputs().size(); ++i) {
+                    for (size_t i = 1; i < set_op->inputs().size(); ++i) {
                         auto input = set_op->inputs().at(i);
                         node::QueryNode* expr_node = nullptr;
                         // TODO(aceforeverd): support set operation
@@ -894,17 +906,18 @@ base::Status ConvertCreateProcedureNode(const zetasql::ASTCreateProcedureStateme
     std::string sp_name;
     CHECK_STATUS(AstPathExpressionToString(ast_create_sp_stmt->name(), &sp_name));
 
-    node::SqlNodeList* procedure_parameters = nullptr;
+    node::SqlNodeList* procedure_parameters = node_manager->MakeNodeList();
     for (const auto param : ast_create_sp_stmt->parameters()->parameter_entries()) {
         node::SqlNode* param_node = nullptr;
         CHECK_STATUS(ConvertParamters(param, node_manager, &param_node));
         procedure_parameters->PushBack(param_node);
     }
 
-    node::SqlNode* body = nullptr;
+    node::SqlNodeList* body = nullptr;
     CHECK_STATUS(ConvertProcedureBody(ast_create_sp_stmt->body(), node_manager, &body));
 
-    node_manager->MakeCreateProcedureNode(sp_name, procedure_parameters, body);
+    *output =
+        static_cast<node::CreateSpStmt*>(node_manager->MakeCreateProcedureNode(sp_name, procedure_parameters, body));
     return base::Status::OK();
 }
 
@@ -1204,17 +1217,15 @@ base::Status ConvertParamters(const zetasql::ASTFunctionParameter* param, node::
     return base::Status(common::kSqlError, "Un-support templated_parameter or tvf_schema type");
 }
 
-// NOTE: convert select stmt or union stmt only
 base::Status ConvertProcedureBody(const zetasql::ASTScript* body, node::NodeManager* node_manager,
-                                  node::SqlNode** output) {
-    // HACK: HybridSE's procedure body support only one query statement
-    auto out_list = node_manager->MakeNodeList();
-    for (const auto stmt : body->statement_list()) {
-        node::SqlNode* stmt_node = nullptr;
-        CHECK_STATUS(ConvertStmt(stmt, node_manager, &stmt_node));
-        out_list->PushBack(stmt_node);
-    }
-    *output = out_list;
+                                  node::SqlNodeList** output) {
+    // HACK: for Procedure Body, there is only one statement which is BeginEndBlock
+    CHECK_TRUE(body->statement_list().size() == 1, common::kSqlError, "procedure body must have one BeginEnd block");
+    node::SqlNode* body_node = nullptr;
+    CHECK_STATUS(ConvertStmt(body->statement_list().at(0), node_manager, &body_node));
+    CHECK_TRUE(body_node->GetType() == node::kNodeList, common::kSqlError,
+               "Inner error: procedure body is not converted to SqlNodeList");
+    *output = static_cast<node::SqlNodeList*>(body_node);
     return base::Status::OK();
 }
 

@@ -68,7 +68,7 @@ base::Status ConvertParamters(const zetasql::ASTFunctionParameter* params, node:
                               node::SqlNode** output);
 
 base::Status ConvertProcedureBody(const zetasql::ASTScript* body, node::NodeManager* node_manager,
-                                  node::SqlNode** output);
+                                  node::SqlNodeList** output);
 
 /// transform zetasql::ASTTableElement into corresponding SqlNode
 base::Status ConvertTableElement(const zetasql::ASTTableElement* ast_table_element, node::NodeManager* node_manager,
