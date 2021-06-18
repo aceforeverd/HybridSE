@@ -1218,6 +1218,11 @@ base::Status ConvertParamters(const zetasql::ASTFunctionParameter* param, node::
     return base::Status(common::kSqlError, "Un-support templated_parameter or tvf_schema type");
 }
 
+// ASTScript([
+//   ASTBeginEndBlock(
+//     [query:ASTQueryStatement])
+//   ]) ->
+// SqlNodeList([query])
 base::Status ConvertProcedureBody(const zetasql::ASTScript* body, node::NodeManager* node_manager,
                                   node::SqlNodeList** output) {
     // HACK: for Procedure Body, there is only one statement which is BeginEndBlock
