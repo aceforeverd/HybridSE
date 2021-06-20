@@ -303,7 +303,7 @@ TEST_F(ASTNodeConverterTest, ConvertFrameNodeTest) {
     }
 }
 
-TEST_F(ASTNodeConverterTest, ConvertCreateTableNodeTest) {
+TEST_F(ASTNodeConverterTest, ConvertCreateTableNodeOkTest) {
     node::NodeManager node_manager;
     {
         const std::string sql =
@@ -384,7 +384,7 @@ TEST_F(ASTNodeConverterTest, ConvertCreateTableNodeTest) {
 
 TEST_F(ASTNodeConverterTest, ConvertCreateProcedureOKTest) {
     node::NodeManager node_manager;
-    auto convert = [&](const std::string& sql) -> void {
+    auto expect_converted = [&](const std::string& sql) -> void {
         std::unique_ptr<zetasql::ParserOutput> parser_output;
         ZETASQL_ASSERT_OK(zetasql::ParseStatement(sql, zetasql::ParserOptions(), &parser_output));
         const auto* statement = parser_output->statement();
@@ -394,6 +394,7 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureOKTest) {
         node::CreateSpStmt* stmt;
         auto s = ConvertCreateProcedureNode(create_sp, &node_manager, &stmt);
         EXPECT_EQ(common::kOk, s.code);
+        LOG(INFO) << "\n" << stmt->GetTreeString();
     };
 
     const std::string sql1 = R"sql(
@@ -445,11 +446,11 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureOKTest) {
         END;
     )sql";
 
-    convert(sql1);
-    convert(sql2);
-    convert(sql3);
-    convert(sql4);
-    convert(sql5);
+    expect_converted(sql1);
+    expect_converted(sql2);
+    expect_converted(sql3);
+    expect_converted(sql4);
+    expect_converted(sql5);
 }
 
 TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
@@ -479,7 +480,8 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
         BEGIN
           SELECT 1 UNION DISTINCT SELECT 2 UNION DISTINCT SELECT 3;
         END;
-        )sql", common::kSqlError, "Un-support templated_parameter or tvf_schema type");
+        )sql",
+                     common::kSqlError, "Un-support templated_parameter or tvf_schema type");
 
     // unknown param type
     expect_converted(R"sql(
@@ -492,7 +494,8 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
         BEGIN
           SELECT 1 UNION DISTINCT SELECT 2 UNION DISTINCT SELECT 3;
         END;
-        )sql", common::kTypeError, "unknow DataType identifier: unknown_type");
+        )sql",
+                     common::kTypeError, "unknow DataType identifier: unknown_type");
 
     // unsupport param type
     expect_converted(R"sql(
@@ -503,7 +506,8 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
         BEGIN
           SELECT 1 UNION DISTINCT SELECT 2;
         END;
-        )sql", common::kSqlError, "Un-support parameter type: ArrayType");
+        )sql",
+                     common::kSqlError, "Un-support parameter type: ArrayType");
 
     // unsupport set operation
     expect_converted(R"sql(
@@ -514,7 +518,8 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
         BEGIN
           SELECT 1 EXCEPT DISTINCT SELECT 2;
         END;
-        )sql", common::kSqlError, "Un-support set operation: EXCEPT DISTINCT");
+        )sql",
+                     common::kSqlError, "Un-support set operation: EXCEPT DISTINCT");
 
     // unsupport statement type
     expect_converted(R"sql(
@@ -522,7 +527,8 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
         BEGIN
           DECLARE ABC INTERVAL;
         END;
-    )sql", common::kSqlError, "Un-support statement type: VariableDeclaration");
+    )sql",
+                     common::kSqlError, "Un-support statement type: VariableDeclaration");
 }
 
 TEST_F(ASTNodeConverterTest, ConvertCreateTableNodeErrorTest) {
