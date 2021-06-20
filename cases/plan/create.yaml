@@ -328,7 +328,7 @@ cases:
     sql: |
       CREATE PROCEDURE procedure_name(
         param_a string,
-        param_b int32
+        const param_b int32
         )
       BEGIN
       END;
@@ -346,7 +346,7 @@ cases:
           |    +-node[kInputParameter]
           |      +-column_name: param_b
           |      +-column_type: int32
-          |      +-is_constant: 0
+          |      +-is_constant: 1
           +-inner_node_list: []
 
   - id: 19_create_procedure
