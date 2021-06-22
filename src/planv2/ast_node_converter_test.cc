@@ -394,7 +394,6 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureOKTest) {
         node::CreateSpStmt* stmt;
         auto s = ConvertCreateProcedureNode(create_sp, &node_manager, &stmt);
         EXPECT_EQ(common::kOk, s.code);
-        LOG(INFO) << "\n" << stmt->GetTreeString();
     };
 
     const std::string sql1 = R"sql(
@@ -528,7 +527,40 @@ TEST_F(ASTNodeConverterTest, ConvertCreateProcedureFailTest) {
           DECLARE ABC INTERVAL;
         END;
     )sql",
-                     common::kSqlError, "Un-support statement type: VariableDeclaration");
+                     common::kSqlError, "Un-support statement type inside ASTBeginEndBlock: VariableDeclaration");
+    expect_converted(R"sql(
+        CREATE PROCEDURE procedure_name()
+        BEGIN
+            BEGIN select 1; END;
+        END;
+    )sql",
+                     common::kSqlError, "Un-support statement type inside ASTBeginEndBlock: BeginEndBlock");
+    expect_converted(R"sql(
+        CREATE PROCEDURE procedure_name()
+        BEGIN
+            select 1;
+            select 2;
+        END;
+    )sql",
+                     common::kSqlError, "Un-support multiple statements inside ASTBeginEndBlock");
+}
+
+TEST_F(ASTNodeConverterTest, ConvertStmtFailTest) {
+    node::NodeManager node_manager;
+    auto expect_converted = [&](const std::string& sql, const int code, const std::string& msg) {
+        std::unique_ptr<zetasql::ParserOutput> parser_output;
+        ZETASQL_ASSERT_OK(zetasql::ParseStatement(sql, zetasql::ParserOptions(), &parser_output));
+        const auto* statement = parser_output->statement();
+
+        node::SqlNode* stmt;
+        auto s = ConvertStmt(statement, &node_manager, &stmt);
+        EXPECT_EQ(code, s.code);
+        EXPECT_STREQ(msg.c_str(), s.msg.c_str()) << s.msg << s.trace;
+    };
+
+    expect_converted(R"sql(
+        ALTER TABLE foo ALTER COLUMN bar SET DATA TYPE STRING;
+    )sql", common::kSqlError, "Un-support statement type: AlterTableStatement");
 }
 
 TEST_F(ASTNodeConverterTest, ConvertCreateTableNodeErrorTest) {

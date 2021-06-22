@@ -352,8 +352,12 @@ base::Status ConvertStmt(const zetasql::ASTStatement* stmt, node::NodeManager* n
         case zetasql::AST_BEGIN_END_BLOCK: {
             auto const begin_end_block = stmt->GetAsOrNull<zetasql::ASTBeginEndBlock>();
             CHECK_TRUE(begin_end_block != nullptr, common::kSqlError, "not and ASTBeginEndBlock");
+            CHECK_TRUE(begin_end_block->statement_list().size() <= 1, common::kSqlError,
+                       "Un-support multiple statements inside ASTBeginEndBlock");
             node::SqlNodeList* stmt_node_list = node_manager->MakeNodeList();
             for (const auto sub_stmt : begin_end_block->statement_list()) {
+                CHECK_TRUE(sub_stmt->node_kind() == zetasql::AST_QUERY_STATEMENT, common::kSqlError,
+                           "Un-support statement type inside ASTBeginEndBlock: ", sub_stmt->GetNodeKindString())
                 node::SqlNode* stmt_node = nullptr;
                 CHECK_STATUS(ConvertStmt(sub_stmt, node_manager, &stmt_node));
                 stmt_node_list->PushBack(stmt_node);
@@ -910,7 +914,7 @@ base::Status ConvertCreateProcedureNode(const zetasql::ASTCreateProcedureStateme
     node::SqlNodeList* procedure_parameters = node_manager->MakeNodeList();
     for (const auto param : ast_create_sp_stmt->parameters()->parameter_entries()) {
         node::SqlNode* param_node = nullptr;
-        CHECK_STATUS(ConvertParamters(param, node_manager, &param_node));
+        CHECK_STATUS(ConvertParamter(param, node_manager, &param_node));
         procedure_parameters->PushBack(param_node);
     }
 
@@ -1183,8 +1187,8 @@ base::Status ConvertTableOption(const zetasql::ASTOptionsEntry* entry, node::Nod
     return base::Status::OK();
 }
 
-base::Status ConvertParamters(const zetasql::ASTFunctionParameter* param, node::NodeManager* node_manager,
-                              node::SqlNode** output) {
+base::Status ConvertParamter(const zetasql::ASTFunctionParameter* param, node::NodeManager* node_manager,
+                             node::SqlNode** output) {
     bool is_constant = param->is_constant();
     std::string column_name = param->name()->GetAsString();
 
@@ -1226,7 +1230,7 @@ base::Status ConvertParamters(const zetasql::ASTFunctionParameter* param, node::
 base::Status ConvertProcedureBody(const zetasql::ASTScript* body, node::NodeManager* node_manager,
                                   node::SqlNodeList** output) {
     // HACK: for Procedure Body, there is only one statement which is BeginEndBlock
-    CHECK_TRUE(body->statement_list().size() == 1, common::kSqlError, "procedure body must have one BeginEnd block");
+    CHECK_TRUE(body->statement_list().size() == 1, common::kSqlError, "procedure body must have one BeginEndBlock");
     node::SqlNode* body_node = nullptr;
     CHECK_STATUS(ConvertStmt(body->statement_list().at(0), node_manager, &body_node));
     CHECK_TRUE(body_node->GetType() == node::kNodeList, common::kSqlError,

@@ -64,7 +64,7 @@ base::Status ConvertCreateTableNode(const zetasql::ASTCreateTableStatement* ast_
 base::Status ConvertCreateProcedureNode(const zetasql::ASTCreateProcedureStatement* ast_create_sp_stmt,
                                         node::NodeManager* node_manager, node::CreateSpStmt** output);
 
-base::Status ConvertParamters(const zetasql::ASTFunctionParameter* params, node::NodeManager* node_manager,
+base::Status ConvertParamter(const zetasql::ASTFunctionParameter* params, node::NodeManager* node_manager,
                               node::SqlNode** output);
 
 base::Status ConvertProcedureBody(const zetasql::ASTScript* body, node::NodeManager* node_manager,

@@ -143,8 +143,9 @@ cases:
           column5 int NOT NULL,
           index(key=column1, ts=column2, ttl=(10d,100), ttl_type=absandlat));
   - id: 13
-    desc: Create statement (typical 1)
+    desc: Create table statement (typical 1)
     mode: 'planner-unsupport'
+    tags: ['TODO']
     sql: |
         create table t1 (a int, b string, index(key=(a, b), dump='12', ts=column2, ttl=1d, ttl_type=absolute, version=(column5, 3)))
         options (replicanum = 3, partitionnum = 3, ignored_option = 'abc',
@@ -195,7 +196,8 @@ cases:
                 +-endpoint: fo2
                 +-role_type: follower
   - id: 14
-    desc: Create statement (typical 2)
+    desc: Create table statement (typical 2)
+    tags: ['TODO', 'fix distribution_list']
     mode: 'planner-unsupport'
     sql: |
         create table if not exists t2 (a i16, b float32, index(key=a, ignored_key='seb', ts=b, ttl=(1h, 1800),
@@ -247,7 +249,8 @@ cases:
                 +-role_type: follower
 
   - id: 15
-    desc: Create statement (typical 3)
+    desc: Create table statement (typical 3)
+    tags: ['TODO', 'fix distribution_list']
     mode: 'planner-unsupport'
     sql: |
       create table if not exists t3 (a int32, b timestamp, index(key=a, ignored_key='seb', ts=b, ttl=1800,
