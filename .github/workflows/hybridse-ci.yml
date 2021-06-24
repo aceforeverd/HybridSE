@@ -127,7 +127,7 @@ jobs:
 
       - name: print setting.xml (DEBUG)
         run: |
-          cat /github/home/.m2/settings.xml
+          cat $HOME/.m2/settings.xml
 
       - name: Install thirdparty
         run: |
