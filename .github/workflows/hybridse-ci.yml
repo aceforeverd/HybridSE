@@ -333,7 +333,7 @@ jobs:
       # bash tools/micro_bench.sh | tee micro_bench_report.txt
       # bash tools/gen_micro_bench_compare.sh
   macos-test:
-    name: Build in MacOS
+    name: test in MacOS
     runs-on: macos-latest
     steps:
       - uses: actions/setup-java@v2
@@ -350,7 +350,7 @@ jobs:
         run: |
           cat $HOME/.m2/settings.xml
   ubuntu-test:
-    name: Build in MacOS
+    name: test in ubuntu
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-java@v2
@@ -365,4 +365,4 @@ jobs:
 
       - name: print setting.xml (DEBUG)
         run: |
-          cat /github/home/.m2/settings.xml
+          cat $HOME/.m2/settings.xml
