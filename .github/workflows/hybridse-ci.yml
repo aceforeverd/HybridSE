@@ -36,10 +36,6 @@ jobs:
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: print setting.xml (DEBUG)
-        run: |
-          cat /github/home/.m2/settings.xml
-
       - name: Build Core
         run: |
           ./tools/hybridse_build.sh
