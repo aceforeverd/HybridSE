@@ -28,8 +28,13 @@ jobs:
           server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_TOKEN
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Value of the GPG private key to import
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
 
       - name: print setting.xml (DEBUG)
         run: |
@@ -238,6 +243,13 @@ jobs:
           server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_TOKEN
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
 
       - name: Build Core
         run: |
@@ -257,6 +269,7 @@ jobs:
           MAVEN_OPTS: -Duser.home=/github/home
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
   release:
     runs-on: ubuntu-latest
