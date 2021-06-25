@@ -31,6 +31,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
       - name: Import GPG key
+        if: ${{ github.event_name == 'push' }}
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v3
         with:
@@ -39,7 +40,7 @@ jobs:
       - name: Build Core
         run: |
           ./tools/hybridse_build.sh
-          
+
       - name: Core Test
         run: |
           ./tools/hybridse_core_test.sh
@@ -129,6 +130,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
       - name: Import GPG key
+        if: ${{ github.event_name == 'push' }}
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v3
         with:
@@ -242,6 +244,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
       - name: Import GPG key
+        if: ${{ github.event_name == 'push' }}
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v3
         with:
