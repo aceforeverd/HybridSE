@@ -605,6 +605,16 @@ TEST_F(ASTNodeConverterTest, ConvertStmtFailTest) {
         ALTER TABLE foo ALTER COLUMN bar SET DATA TYPE STRING;
     )sql",
                      common::kSqlError, "Un-support statement type: AlterTableStatement");
+
+    expect_converted(R"sql(
+        SHOW procedurxs;
+    )sql",
+                     common::kSqlError, "Un-support SHOW: procedurxs");
+
+    expect_converted(R"sql(
+        SHOW create procedure ab.cd.name;
+    )sql",
+                     common::kSqlError, "Invalid name for SHOW CREATE PROCEDURE: ab.cd.name");
 }
 
 TEST_F(ASTNodeConverterTest, ConvertCreateTableNodeErrorTest) {
@@ -830,12 +840,14 @@ TEST_P(ASTNodeConverterTest, SqlNodeTreeEqual) {
     status = ConvertStatement(statement, manager_, &output);
     EXPECT_EQ(common::kOk, status.code) << status.msg << status.trace;
     if (status.isOK() && GetParam().expect().node_tree_str_.has_value()) {
-        EXPECT_EQ(GetParam().expect().node_tree_str_.value(), output->GetTreeString());
+        EXPECT_STREQ(GetParam().expect().node_tree_str_.value().c_str(), output->GetTreeString().c_str());
     }
 }
 const std::vector<std::string> FILTERS({"logical-plan-unsupport", "parser-unsupport", "zetasql-unsupport"});
-INSTANTIATE_TEST_CASE_P(PlannerV2Test, ASTNodeConverterTest,
+INSTANTIATE_TEST_CASE_P(PlannerV2CreateTest, ASTNodeConverterTest,
                         testing::ValuesIn(sqlcase::InitCases("cases/plan/create.yaml", FILTERS)));
+INSTANTIATE_TEST_CASE_P(PlannerV2CmdTest, ASTNodeConverterTest,
+                        testing::ValuesIn(sqlcase::InitCases("cases/plan/cmd.yaml", FILTERS)));
 
 }  // namespace plan
 }  // namespace hybridse

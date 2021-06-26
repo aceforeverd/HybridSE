@@ -60,8 +60,16 @@ inline const std::string CmdTypeName(const CmdType &type) {
             return "drop table";
         case kCmdExit:
             return "exit";
-        default:
-            return "unknown cmd type";
+        case kCmdCreateIndex:
+            return "create index";
+        case kCmdShowProcedures:
+            return "show procedures";
+        case kCmdShowCreateSp:
+            return "show create procedure";
+        case kCmdDropIndex:
+            return "drop index";
+        case kCmdDropSp:
+            return "drop procedure";
     }
 }
 
