@@ -19,7 +19,6 @@
 #include <vm/catalog.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h>
-#include <optional>
 #include <set>
 #include <string>
 #include <vector>

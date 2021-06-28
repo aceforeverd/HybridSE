@@ -70,6 +70,8 @@ inline const std::string CmdTypeName(const CmdType &type) {
             return "drop index";
         case kCmdDropSp:
             return "drop procedure";
+        default:
+            return "unknown cmd type";
     }
 }
 
