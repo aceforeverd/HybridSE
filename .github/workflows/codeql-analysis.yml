@@ -43,13 +43,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Install CodeQL
-      run: |
-        curl -SLO https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz
-        tar xzf codeql-bundle-linux64.tar.gz
-        echo "$GITHUB_WORKSPACE"
-        echo "$(pwd)/codeql" >> $GITHUB_PATH
-
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
@@ -62,8 +55,6 @@ jobs:
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
-    # - name: Autobuild
-    #   uses: github/codeql-action/autobuild@v1
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -72,7 +63,12 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
+    - name: Autobuild
+      if: matrix.language != 'cpp' && matrix.language != 'java'
+      uses: github/codeql-action/autobuild@v1
+
     - name: Build Core
+      if: matrix.language == 'cpp' || matrix.language == 'java'
       run: |
           ./tools/hybridse_build.sh
 
