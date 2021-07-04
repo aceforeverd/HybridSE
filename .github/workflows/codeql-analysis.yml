@@ -24,6 +24,8 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/4paradigm/hybridsql:0.3.0
     permissions:
       actions: read
       contents: read
@@ -32,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'java', 'javascript', 'python' ]
+        language: [ 'cpp', 'java', 'python' ]
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
@@ -40,6 +42,13 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+
+    - name: Install CodeQL
+      run: |
+        curl -SLO https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz
+        tar xzf codeql-bundle-linux64.tar.gz
+        echo "$GITHUB_WORKSPACE"
+        echo "$(pwd)/codeql" >> $GITHUB_PATH
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -53,8 +62,8 @@ jobs:
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+    # - name: Autobuild
+    #   uses: github/codeql-action/autobuild@v1
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -63,9 +72,9 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    #- run: |
-    #   make bootstrap
-    #   make release
+    - name: Build Core
+      run: |
+          ./tools/hybridse_build.sh
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
