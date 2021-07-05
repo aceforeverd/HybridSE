@@ -24,8 +24,6 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/4paradigm/hybridsql:0.3.0
     permissions:
       actions: read
       contents: read
@@ -34,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'java', 'python' ]
+        language: [ 'cpp', 'java', 'javascript', 'python' ]
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
@@ -42,19 +40,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-
-    - name: Install CodeQL
-      run: |
-        curl -SLO https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz
-        tar xzf codeql-bundle-linux64.tar.gz
-        echo "$GITHUB_WORKSPACE"
-        echo "$(pwd)/codeql" >> $GITHUB_PATH
-
-    - name: debug 2
-      run: |
-        command -v codeql
-        codeql version
-        codeql resolve qlpacks
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -65,14 +50,11 @@ jobs:
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
-    - name: debug 3
-      run: |
-        command -v codeql
-        codeql version
-        codeql resolve qlpacks
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v1
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -81,14 +63,9 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    - name: Autobuild
-      if: matrix.language != 'cpp' && matrix.language != 'java'
-      uses: github/codeql-action/autobuild@v1
-
-    # - name: Build Core
-    #   if: matrix.language == 'cpp' || matrix.language == 'java'
-    #   run: |
-    #       ./tools/hybridse_build.sh
+    #- run: |
+    #   make bootstrap
+    #   make release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
