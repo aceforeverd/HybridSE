@@ -61,6 +61,10 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
+    - name: Install thirdparty
+      run: |
+        brew install coreutils swig automake
+
     - name: Autobuild
       if: matrix.language != 'cpp' && matrix.language != 'java'
       uses: github/codeql-action/autobuild@v1
