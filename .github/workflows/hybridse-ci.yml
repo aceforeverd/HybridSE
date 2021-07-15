@@ -138,7 +138,6 @@ jobs:
       - name: Install thirdparty
         run: |
           brew install yaml-cpp coreutils swig automake
-          sh tools/install_thirdparty_mac.sh
 
       - name: Build Core
         run: |
