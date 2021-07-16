@@ -41,7 +41,7 @@ popd
 pushd java
 if [[ "$OSTYPE" = "darwin"* ]]; then
     mvn prepare-package -P macos
-elif [[ "$OSTYPE" = "linux-gun" ]]; then
+elif [[ "$OSTYPE" = "linux-gnu" ]]; then
     mvn prepare-package
 fi
 popd
