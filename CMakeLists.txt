@@ -190,20 +190,8 @@ list(
         absl::status)
 
 list(APPEND ICU_LIBS icui18n icuio icuuc icudata)
-list(APPEND file_based_test_driver_LIBS
-        alternations
-        test_case_options
-        test_case_outputs
-        test_case_mode
-        logging
-        path
-        status
-        unified_diff_oss
-        ret_check
-        )
 set(ZETASQL_LIBS
         zetasql
-        ${file_based_test_driver_LIBS}
         ${ABSL_LIBS}
         re2
         ${ICU_LIBS}
