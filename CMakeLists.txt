@@ -195,9 +195,6 @@ set(ZETASQL_LIBS
         ${ABSL_LIBS}
         re2
         ${ICU_LIBS}
-        date_proto
-        timeofday_proto
-        latlng_proto
     )
 if (PYSDK_ENABLE)
     set(Python_ADDITIONAL_VERSIONS "3.8;3.7;3.6;3.5;2.7" CACHE STRING "Python to use for binding")
