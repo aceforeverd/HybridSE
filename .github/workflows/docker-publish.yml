@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - docker/Dockerfile
+      - docker/**/*.sh
 
 env:
   IMAGE_NAME: hybridsql
