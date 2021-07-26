@@ -39,8 +39,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
 project(hybridse)
 
 set(HYBRIDSE_VERSION_MAJOR 0)
-set(HYBRIDSE_VERSION_MINOR 1)
-set(HYBRIDSE_VERSION_BUG 5)
+set(HYBRIDSE_VERSION_MINOR 2)
+set(HYBRIDSE_VERSION_BUG 0)
 
 option(TESTING_ENABLE "Enable Test" ON)
 option(CORE_TESTING_ENABLE "Enable Core Test" ON)
@@ -66,11 +66,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(UNIX AND NOT APPLE AND NOT DEFINED SWIG_DIR)
-    # TODO: swig 4.0.1 compiled is not portable, check 'swig -swiglib'
-    set(SWIG_DIR ${CMAKE_SOURCE_DIR}/thirdparty/share/swig/4.0.1)
-endif()
-
+set(SWIG_DIR ${CMAKE_PREFIX_PATH}/share/swig/4.0.1)
 # llvm dependency
 if (NOT DEFINED LLVM_DIR)
     set(LLVM_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/llvm")
@@ -90,7 +86,7 @@ endif ()
 
 find_package(Threads)
 
-
+set(Boost_NO_BOOST_CMAKE ON)
 set(BOOST_ROOT "${CMAKE_PREFIX_PATH}")
 find_package(Boost COMPONENTS filesystem date_time regex REQUIRED)
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -190,26 +186,11 @@ list(
         absl::status)
 
 list(APPEND ICU_LIBS icui18n icuio icuuc icudata)
-list(APPEND file_based_test_driver_LIBS
-        alternations
-        test_case_options
-        test_case_outputs
-        test_case_mode
-        logging
-        path
-        status
-        unified_diff_oss
-        ret_check
-        )
 set(ZETASQL_LIBS
         zetasql
-        ${file_based_test_driver_LIBS}
         ${ABSL_LIBS}
         re2
         ${ICU_LIBS}
-        date_proto
-        timeofday_proto
-        latlng_proto
     )
 if (PYSDK_ENABLE)
     set(Python_ADDITIONAL_VERSIONS "3.8;3.7;3.6;3.5;2.7" CACHE STRING "Python to use for binding")
