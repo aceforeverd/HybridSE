@@ -33,15 +33,15 @@ mkdir -p "$THIRDSRC_PATH"
 pushd "${THIRDSRC_PATH}"
 
 if [[ "$OSTYPE" = "darwin"* ]]; then
-    curl -SLo thirdparty.tar.gz https://github.com/aceforeverd/hybridsql-asserts/releases/download/v0.4.0/thirdparty-2021-07-25-darwin-x86_64.tar.gz
-    curl -SLo libzetasql.tar.gz https://github.com/aceforeverd/zetasql/releases/download/v0.2.1-beta3/libzetasql-0.2.1-beta3-darwin-x86_64.tar.gz
+    curl -SLo thirdparty.tar.gz https://github.com/aceforeverd/hybridsql-asserts/releases/download/v0.4.0/thirdparty-2021-07-28-darwin-x86_64.tar.gz
+    curl -SLo libzetasql.tar.gz https://github.com/aceforeverd/zetasql/releases/download/v0.2.1-beta5/libzetasql-0.2.1-beta5-darwin-x86_64.tar.gz
 elif [[ "$OSTYPE" = "linux-gnu"* ]]; then
     if [[ $ARCH = 'x86_64' ]]; then
-        curl -SLo thirdparty.tar.gz https://github.com/aceforeverd/hybridsql-asserts/releases/download/v0.4.0/thirdparty-2021-07-25-linux-gnu-x86_64.tar.gz
-        curl -SLo libzetasql.tar.gz https://github.com/aceforeverd/zetasql/releases/download/v0.2.1-beta3/libzetasql-0.2.1-beta3-linux-gnu-x86_64.tar.gz
-    elif [[ $ARCH = 'aarch64' || $ARCH = 'arm64' ]]; then
-        # TODO
-        curl -SLo thirdparty.tar.gz https://github.com/aceforeverd/hybridsql-asserts/releases/download/v0.4.0/thirdparty-linux-gnu-aarch64.tar.gz
+        curl -SLo thirdparty.tar.gz https://github.com/aceforeverd/hybridsql-asserts/releases/download/v0.4.0/thirdparty-2021-07-28-linux-gnu-x86_64.tar.gz
+        curl -SLo libzetasql.tar.gz https://github.com/aceforeverd/zetasql/releases/download/v0.2.1-beta5/libzetasql-0.2.1-beta5-linux-gnu-x86_64.tar.gz
+    elif [[ $ARCH = 'aarch64' ]]; then
+        curl -SLo thirdparty.tar.gz https://github.com/aceforeverd/hybridsql-asserts/releases/download/v0.4.0/thirdparty-2021-07-28-linux-gnu-aarch64.tar.gz
+        curl -SLo libzetasql.tar.gz https://github.com/aceforeverd/zetasql/releases/download/v0.2.1-beta5/libzetasql-0.2.1-beta5-linux-gnu-aarch64.tar.gz
     fi
 fi
 
