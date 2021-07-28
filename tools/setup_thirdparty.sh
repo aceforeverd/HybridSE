@@ -27,6 +27,11 @@ echo "Install thirdparty ... for $(uname -a)"
 THIRDPARTY_PATH=${1:-"$ROOT/thirdparty"}
 THIRDSRC_PATH="$ROOT/thirdsrc"
 
+if [ -d "$THIRDPARTY_PATH" ]; then
+    echo "thirdparty path: $THIRDPARTY_PATH already exist, skip download deps"
+    exit 0
+fi
+
 mkdir -p "$THIRDPARTY_PATH"
 mkdir -p "$THIRDSRC_PATH"
 
