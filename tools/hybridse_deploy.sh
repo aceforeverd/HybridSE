@@ -28,8 +28,8 @@ if [[ -z $HYBRIDSE_VERSION ]]; then
     HYBRIDSE_VERSION="SNAPSHOT-$(git rev-parse --short HEAD)"
 fi
 
-OS=${OS:-linux}
-ARCH=${ARCH:-x86_64}
+OS=${OS:-$OSTYPE}
+ARCH=${ARCH:-$(uname -m)}
 
 OUTPUT_DIR="hybridse-$HYBRIDSE_VERSION-$OS-$ARCH"
 OUTPUT_ARCHIVE="$OUTPUT_DIR.tar.gz"
