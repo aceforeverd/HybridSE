@@ -161,6 +161,7 @@ link_directories(${CMAKE_PREFIX_PATH}/lib64)
 
 find_package(absl REQUIRED)
 
+set(GTEST_ROOT ${CMAKE_PREFIX_PATH})
 find_package(GTest REQUIRED)
 
 set(Protobuf_USE_STATIC_LIBS ON)
