@@ -6,10 +6,11 @@ group: edge
 language: cpp
 
 install:
+  - rm -rf /usr/local/cmake-*/
   - curl -SLo cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.21.1/cmake-3.21.1-linux-aarch64.tar.gz && sudo tar xzf cmake.tar.gz -C /usr/local/ --strip-components=1
 
 script:
-  - ./tool/hybridse_build.sh
+  - ./tools/hybridse_build.sh
   - ./tools/hybridse_core_test.sh
 
 before_deploy:
