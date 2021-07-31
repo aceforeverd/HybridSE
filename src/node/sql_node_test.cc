@@ -711,6 +711,300 @@ TEST_F(SqlNodeTest, IndexVersionNodeTest) {
     }
 }
 
+TEST_F(SqlNodeTest, CreateIndexNodeTest) {
+    SqlNodeList *index_items = node_manager_->MakeNodeList();
+    index_items->PushBack(node_manager_->MakeIndexKeyNode("col4"));
+    index_items->PushBack(node_manager_->MakeIndexTsNode("col5"));
+    ColumnIndexNode *index_node = dynamic_cast<ColumnIndexNode *>(node_manager_->MakeColumnIndexNode(index_items));
+    CreatePlanNode *node = node_manager_->MakeCreateTablePlanNode(
+        "t1", 3, 8,
+        {node_manager_->MakeColumnDescNode("col1", node::kInt32, true),
+         node_manager_->MakeColumnDescNode("col2", node::kInt32, true),
+         node_manager_->MakeColumnDescNode("col3", node::kFloat, true),
+         node_manager_->MakeColumnDescNode("col4", node::kVarchar, true),
+         node_manager_->MakeColumnDescNode("col5", node::kTimestamp, true), index_node},
+        {});
+    ASSERT_TRUE(nullptr != node);
+    std::vector<std::string> columns;
+    std::vector<std::string> indexes;
+    ASSERT_TRUE(node->ExtractColumnsAndIndexs(columns, indexes));
+    ASSERT_EQ(std::vector<std::string>({"col1 int32", "col2 int32", "col3 float", "col4 string", "col5 timestamp"}),
+              columns);
+    ASSERT_EQ(std::vector<std::string>({"index1:col4:col5"}), indexes);
+
+    CreateIndexNode *create_index_node =
+        dynamic_cast<node::CreateIndexNode *>(node_manager_->MakeCreateIndexNode("index1", "t1", index_node));
+
+    ASSERT_TRUE(nullptr != create_index_node);
+    std::ostringstream oss;
+    create_index_node->Print(oss, "");
+    ASSERT_EQ(
+        "+-node[kCreateIndexStmt]\n"
+        "  +-index_name: index1\n"
+        "  +-table_name: t1\n"
+        "  +-index:\n"
+        "    +-node[kColumnIndex]\n"
+        "      +-keys: [col4]\n"
+        "      +-ts_col: col5\n"
+        "      +-abs_ttl: -2\n"
+        "      +-lat_ttl: -2\n"
+        "      +-ttl_type: <nil>\n"
+        "      +-version_column: <nil>\n"
+        "      +-version_count: 0",
+        oss.str());
+}
+TEST_F(SqlNodeTest, FnNodeTest) {
+    node::FnNodeList *params = node_manager_->MakeFnListNode();
+    params->AddChild(node_manager_->MakeFnParaNode("x", node_manager_->MakeTypeNode(node::kInt32)));
+    params->AddChild(node_manager_->MakeFnParaNode("y", node_manager_->MakeTypeNode(node::kInt32)));
+
+    node::FnIfNode *if_node =
+        dynamic_cast<node::FnIfNode *>(node_manager_->MakeIfStmtNode(node_manager_->MakeBinaryExprNode(
+            node_manager_->MakeUnresolvedExprId("x"), node_manager_->MakeConstNode(1), node::kFnOpGt)));
+    node::FnIfBlock *if_block = node_manager_->MakeFnIfBlock(
+        if_node,
+        node_manager_->MakeFnListNode(node_manager_->MakeReturnStmtNode(node_manager_->MakeBinaryExprNode(
+            node_manager_->MakeUnresolvedExprId("x"), node_manager_->MakeUnresolvedExprId("y"), node::kFnOpAdd))));
+    std::vector<node::FnNode *> elif_blocks;
+    node::FnElifBlock *elif_block = node_manager_->MakeFnElifBlock(
+        dynamic_cast<node::FnElifNode *>(node_manager_->MakeElifStmtNode(node_manager_->MakeBinaryExprNode(
+            node_manager_->MakeUnresolvedExprId("y"), node_manager_->MakeConstNode(2), node::kFnOpGt))),
+        node_manager_->MakeFnListNode(node_manager_->MakeReturnStmtNode(node_manager_->MakeBinaryExprNode(
+            node_manager_->MakeUnresolvedExprId("x"), node_manager_->MakeUnresolvedExprId("y"), node::kFnOpMinus))));
+    elif_blocks.push_back(elif_block);
+    node::FnElseBlock *else_block = node_manager_->MakeFnElseBlock(
+        node_manager_->MakeFnListNode(node_manager_->MakeReturnStmtNode(node_manager_->MakeBinaryExprNode(
+            node_manager_->MakeUnresolvedExprId("x"), node_manager_->MakeUnresolvedExprId("y"), node::kFnOpMulti))));
+
+    node::FnNodeFnDef *fn_def = dynamic_cast<node::FnNodeFnDef *>(node_manager_->MakeFnDefNode(
+        node_manager_->MakeFnHeaderNode("test", params, node_manager_->MakeTypeNode(node::kInt32)),
+        node_manager_->MakeFnListNode(node_manager_->MakeFnIfElseBlock(if_block, elif_blocks, else_block))));
+
+    std::ostringstream oss;
+    fn_def->Print(oss, "");
+    ASSERT_EQ(
+        "+-node[kFnDef]\n"
+        "  +-header:\n"
+        "  |  +-node[kFnHeader]\n"
+        "  |    +-func_name: test\n"
+        "  |    +-return_type:\n"
+        "  |      +-node[kType]\n"
+        "  |        +-type: int32\n"
+        "  |    +-parameters:\n"
+        "  |      +-node[kFnList]\n"
+        "  |        +-list[list]:\n"
+        "  |          +-0:\n"
+        "  |          |  +-node[kFnPara]\n"
+        "  |          |    +-x:\n"
+        "  |          |      +-node[kType]\n"
+        "  |          |        +-type: int32\n"
+        "  |          +-1:\n"
+        "  |            +-node[kFnPara]\n"
+        "  |              +-y:\n"
+        "  |                +-node[kType]\n"
+        "  |                  +-type: int32\n"
+        "  +-block:\n"
+        "    +-node[kFnList]\n"
+        "      +-list[list]:\n"
+        "        +-0:\n"
+        "          +-node[kFnIfElseBlock]\n"
+        "            +-if:\n"
+        "            |  +-node[kFnIfBlock]\n"
+        "            |    +-if:\n"
+        "            |    |  +-node[kFnIfStmt]\n"
+        "            |    |    +-if:\n"
+        "            |    |      +-expr[binary]\n"
+        "            |    |        +->[list]:\n"
+        "            |    |          +-0:\n"
+        "            |    |          |  +-expr[id]\n"
+        "            |    |          |    +-var: %-1(x)\n"
+        "            |    |          +-1:\n"
+        "            |    |            +-expr[primary]\n"
+        "            |    |              +-value: 1\n"
+        "            |    |              +-type: int32\n"
+        "            |    +-block:\n"
+        "            |      +-node[kFnList]\n"
+        "            |        +-list[list]:\n"
+        "            |          +-0:\n"
+        "            |            +-node[kFnReturnStmt]\n"
+        "            |              +-return:\n"
+        "            |                +-expr[binary]\n"
+        "            |                  +-+[list]:\n"
+        "            |                    +-0:\n"
+        "            |                    |  +-expr[id]\n"
+        "            |                    |    +-var: %-1(x)\n"
+        "            |                    +-1:\n"
+        "            |                      +-expr[id]\n"
+        "            |                        +-var: %-1(y)\n"
+        "            +-elif_list[list]:\n"
+        "            |  +-0:\n"
+        "            |    +-node[kFnElIfBlock]\n"
+        "            |      +-elif:\n"
+        "            |      |  +-node[kFnElseifStmt]\n"
+        "            |      |    +-elif:\n"
+        "            |      |      +-expr[binary]\n"
+        "            |      |        +->[list]:\n"
+        "            |      |          +-0:\n"
+        "            |      |          |  +-expr[id]\n"
+        "            |      |          |    +-var: %-1(y)\n"
+        "            |      |          +-1:\n"
+        "            |      |            +-expr[primary]\n"
+        "            |      |              +-value: 2\n"
+        "            |      |              +-type: int32\n"
+        "            |      +-block:\n"
+        "            |        +-node[kFnList]\n"
+        "            |          +-list[list]:\n"
+        "            |            +-0:\n"
+        "            |              +-node[kFnReturnStmt]\n"
+        "            |                +-return:\n"
+        "            |                  +-expr[binary]\n"
+        "            |                    +--[list]:\n"
+        "            |                      +-0:\n"
+        "            |                      |  +-expr[id]\n"
+        "            |                      |    +-var: %-1(x)\n"
+        "            |                      +-1:\n"
+        "            |                        +-expr[id]\n"
+        "            |                          +-var: %-1(y)\n"
+        "            +-else:\n"
+        "              +-node[kFnElseBlock]\n"
+        "                +-block:\n"
+        "                  +-node[kFnList]\n"
+        "                    +-list[list]:\n"
+        "                      +-0:\n"
+        "                        +-node[kFnReturnStmt]\n"
+        "                          +-return:\n"
+        "                            +-expr[binary]\n"
+        "                              +-*[list]:\n"
+        "                                +-0:\n"
+        "                                |  +-expr[id]\n"
+        "                                |    +-var: %-1(x)\n"
+        "                                +-1:\n"
+        "                                  +-expr[id]\n"
+        "                                    +-var: %-1(y)",
+        oss.str());
+}
+TEST_F(SqlNodeTest, ExprIsConstTest) {
+    ASSERT_TRUE(node::ExprIsConst(node_manager_->MakeConstNode(1)));
+
+    ASSERT_TRUE(node::ExprIsConst(node_manager_->MakeBetweenExpr(
+        node_manager_->MakeConstNode(10), node_manager_->MakeConstNode(0), node_manager_->MakeConstNode(100), true)));
+    ASSERT_FALSE(node::ExprIsConst(node_manager_->MakeBetweenExpr(node_manager_->MakeColumnRefNode("col1", ""),
+                                                                  node_manager_->MakeConstNode(0),
+                                                                  node_manager_->MakeConstNode(100), true)));
+
+    {
+        node::ExprListNode *args = node_manager_->MakeExprList();
+        args->AddChild(node_manager_->MakeConstNode("s1"));
+        args->AddChild(node_manager_->MakeConstNode("s2"));
+        ASSERT_TRUE(node::ExprIsConst(node_manager_->MakeFuncNode("concat", args, nullptr)));
+    }
+    {
+        node::ExprListNode *args = node_manager_->MakeExprList();
+        args->AddChild(node_manager_->MakeColumnRefNode("col1", ""));
+        node::SqlNode *over = node_manager_->MakeWindowDefNode(
+            node_manager_->MakeExprList(node_manager_->MakeColumnRefNode("key1", "")),
+            node_manager_->MakeOrderByNode(node_manager_->MakeExprList(
+                node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("std_ts", ""), true))),
+            node_manager_->MakeFrameNode(node::FrameType::kFrameRows,
+                                         node_manager_->MakeFrameExtent(node_manager_->MakeFrameBound(kPreceding, 100),
+                                                                        node_manager_->MakeFrameBound(kCurrent))));
+        ASSERT_FALSE(node::ExprIsConst(node_manager_->MakeFuncNode("sum", args, over)));
+    }
+    {
+        node::ExprListNode *args = node_manager_->MakeExprList();
+        args->AddChild(node_manager_->MakeConstNode("s1"));
+        args->AddChild(node_manager_->MakeColumnRefNode("col1", ""));
+        ASSERT_FALSE(node::ExprIsConst(node_manager_->MakeFuncNode("concat", args, nullptr)));
+    }
+}
+TEST_F(SqlNodeTest, CallExprTest) {
+    node::ExprListNode *args = node_manager_->MakeExprList();
+    args->AddChild(node_manager_->MakeConstNode("s1"));
+    args->AddChild(node_manager_->MakeColumnRefNode("col1", ""));
+    node::CallExprNode *node = node_manager_->MakeFuncNode("concat", args, nullptr);
+    ASSERT_EQ("concat", node->GetFnDef()->GetName());
+    ASSERT_EQ(2, node->GetChildNum());
+    std::ostringstream oss;
+    node->Print(oss, "");
+    DLOG(INFO) << oss.str();
+    ASSERT_EQ(
+        "+-expr[function]\n"
+        "  +-function:\n"
+        "  |  [Unresolved](concat)\n"
+        "  +-arg[0]:\n"
+        "  |  +-expr[primary]\n"
+        "  |    +-value: s1\n"
+        "  |    +-type: string\n"
+        "  +-arg[1]:\n"
+        "    +-expr[column ref]\n"
+        "      +-relation_name: <nil>\n"
+        "      +-column_name: col1",
+        oss.str());
+}
+TEST_F(SqlNodeTest, ColumnIdTest) {
+    node::ColumnIdNode *node = node_manager_->MakeColumnIdNode(1);
+    ASSERT_EQ(1, node->GetColumnID());
+    ASSERT_EQ("#1", node->GenerateExpressionName());
+    ASSERT_EQ("#1", node->GetExprString());
+
+    ASSERT_TRUE(node::ExprEquals(node, node));
+    ASSERT_TRUE(node::ExprEquals(node, node_manager_->MakeColumnIdNode(1)));
+
+    ASSERT_FALSE(node::ExprEquals(node, node_manager_->MakeColumnIdNode(2)));
+    ASSERT_FALSE(node::ExprEquals(node, nullptr));
+    ASSERT_FALSE(node::ExprEquals(node, node_manager_->MakeColumnRefNode("col1", "")));
+    std::ostringstream oss;
+    node->Print(oss, "");
+    DLOG(INFO) << oss.str();
+    ASSERT_EQ(
+        "+-expr[column id]\n"
+        "  +-column_id: 1",
+        oss.str());
+}
+
+TEST_F(SqlNodeTest, QueryTypeNameTest) {
+    ASSERT_EQ("kQuerySelect", node::QueryTypeName(node::kQuerySelect));
+    ASSERT_EQ("kQueryUnion", node::QueryTypeName(node::kQueryUnion));
+    ASSERT_EQ("kQuerySub", node::QueryTypeName(node::kQuerySub));
+}
+
+TEST_F(SqlNodeTest, OrderByNodeTest) {
+    // expr list
+    ExprListNode *expr_list1 = node_manager_->MakeExprList();
+    expr_list1->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("col1", ""), true));
+    expr_list1->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("col2", ""), true));
+
+    ExprListNode *expr_list2 = node_manager_->MakeExprList();
+    expr_list2->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("col1", ""), true));
+    expr_list2->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("col2", ""), true));
+
+    ExprListNode *expr_list3 = node_manager_->MakeExprList();
+    expr_list3->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("c1", ""), true));
+    expr_list3->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("col2", ""), true));
+
+    ExprListNode *expr_list4 = node_manager_->MakeExprList();
+    expr_list4->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("col1", ""), true));
+    expr_list4->AddChild(node_manager_->MakeOrderExpression(node_manager_->MakeColumnRefNode("col2", ""), false));
+    ASSERT_TRUE(expr_list1->Equals(expr_list1));
+    ASSERT_TRUE(expr_list1->Equals(expr_list2));
+    ASSERT_FALSE(expr_list1->Equals(expr_list3));
+    ASSERT_FALSE(expr_list1->Equals(expr_list4));
+
+    // order
+    ExprNode *order1 = node_manager_->MakeOrderByNode(expr_list1);
+    ExprNode *order2 = node_manager_->MakeOrderByNode(expr_list1);
+    ExprNode *order3 = node_manager_->MakeOrderByNode(expr_list3);
+    ExprNode *order4 = node_manager_->MakeOrderByNode(expr_list4);
+
+    ASSERT_TRUE(order1->Equals(order1));
+    ASSERT_TRUE(order1->Equals(order2));
+    ASSERT_FALSE(order1->Equals(order3));
+    ASSERT_FALSE(order1->Equals(order4));
+    ASSERT_EQ("(col1 ASC, col2 ASC)", order1->GetExprString());
+    ASSERT_EQ("(col1 ASC, col2 ASC)", order2->GetExprString());
+    ASSERT_EQ("(c1 ASC, col2 ASC)", order3->GetExprString());
+    ASSERT_EQ("(col1 ASC, col2 DESC)", order4->GetExprString());
+}
 }  // namespace node
 }  // namespace hybridse
 

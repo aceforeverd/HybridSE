@@ -335,16 +335,8 @@ SqlNode *NodeManager::MakeFrameNode(FrameType frame_type,
         new FrameNode(frame_type, frame_range, frame_rows, maxsize);
     return RegisterNode(node_ptr);
 }
-
-OrderByNode *NodeManager::MakeOrderByNode(const ExprListNode *order,
-                                          const bool is_asc) {
-    std::vector<bool> is_asc_list;
-    if (nullptr != order) {
-        for (size_t i = 0; i < order->GetChildNum(); i++) {
-            is_asc_list.push_back(is_asc);
-        }
-    }
-    OrderByNode *node_ptr = new OrderByNode(order, is_asc_list, is_asc);
+OrderExpression *NodeManager::MakeOrderExpression(const ExprNode *expr, const bool is_asc) {
+    OrderExpression *node_ptr = new OrderExpression(expr, is_asc);
     return RegisterNode(node_ptr);
 }
 OrderByNode *NodeManager::MakeOrderByNode(const ExprListNode *order,
@@ -1108,8 +1100,10 @@ FuncDefPlanNode *NodeManager::MakeFuncPlanNode(FnNodeFnDef *node) {
     RegisterNode(node_ptr);
     return node_ptr;
 }
-QueryExpr *NodeManager::MakeQueryExprNode(const QueryNode *query) {
-    return RegisterNode(new QueryExpr(query));
+CreateIndexPlanNode *NodeManager::MakeCreateCreateIndexPlanNode(const CreateIndexNode *node) {
+    node::CreateIndexPlanNode *node_ptr = new CreateIndexPlanNode(node);
+    RegisterNode(node_ptr);
+    return node_ptr;
 }
 PlanNode *NodeManager::MakeSortPlanNode(PlanNode *node,
                                         const OrderByNode *order_list) {
@@ -1242,12 +1236,10 @@ SqlNode *NodeManager::MakeCreateProcedureNode(const std::string &sp_name,
     return RegisterNode(node_ptr);
 }
 
-SqlNode *NodeManager::MakeCreateProcedureNode(const std::string &sp_name,
-                                              SqlNodeList *input_parameter_list,
+SqlNode *NodeManager::MakeCreateProcedureNode(const std::string &sp_name, SqlNodeList *input_parameter_list,
                                               SqlNodeList *inner_node_list) {
     CreateSpStmt *node_ptr = new CreateSpStmt(sp_name);
-    FillSqlNodeList2NodeVector(input_parameter_list,
-                               node_ptr->GetInputParameterList());
+    FillSqlNodeList2NodeVector(input_parameter_list, node_ptr->GetInputParameterList());
     FillSqlNodeList2NodeVector(inner_node_list, node_ptr->GetInnerNodeList());
     return RegisterNode(node_ptr);
 }

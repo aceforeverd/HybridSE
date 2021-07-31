@@ -612,6 +612,18 @@ int SimplePlanner::CreatePlanTree(
                 plan_trees.push_back(fn_plan);
                 break;
             }
+            case ::hybridse::node::kExplainStmt: {
+                node::PlanNode *explan_plan = nullptr;
+                CHECK_STATUS(CreateExplainPlan(parser_tree, &explan_plan))
+                plan_trees.push_back(explan_plan);
+                break;
+            }
+            case ::hybridse::node::kCreateIndexStmt: {
+                node::PlanNode *create_index_plan = nullptr;
+                CHECK_STATUS(CreateCreateIndexPlan(parser_tree, &create_index_plan))
+                plan_trees.push_back(create_index_plan);
+                break;
+            }
             default: {
                 status.msg = "can not handle tree type " +
                              node::NameOfSqlNodeType(parser_tree->GetType());
