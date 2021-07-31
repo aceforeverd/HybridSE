@@ -52,9 +52,8 @@ using namespace ::llvm;  // NOLINT
 
 // Use const return to avoid some compiler bug
 // in debug mode of benchmark
-static const int64_t RunTableRequest(
-    RequestRunSession& session,  // NOLINT
-    std::shared_ptr<vm::TableHandler> table_handler, int64_t limit_cnt) {
+static const int64_t RunTableRequest(RequestRunSession& session,  // NOLINT
+                                     std::shared_ptr<vm::TableHandler> table_handler, int64_t limit_cnt) {
     auto iter = table_handler->GetIterator();
     int64_t cnt = 0;
     while (cnt < limit_cnt && iter->Valid()) {
@@ -94,15 +93,13 @@ int32_t MapTopFn(int64_t limit) {
     return 0;
 }
 
-void MapTop1(benchmark::State* state, MODE mode, int64_t limit_cnt,
-             int64_t size) {
+void MapTop1(benchmark::State* state, MODE mode, int64_t limit_cnt, int64_t size) {
     for (auto _ : *state) {
         benchmark::DoNotOptimize(MapTopFn(size));
     }
 }
 
-static void EngineRequestMode(const std::string sql, MODE mode,
-                              int64_t limit_cnt, int64_t size,
+static void EngineRequestMode(const std::string sql, MODE mode, int64_t limit_cnt, int64_t size,
                               benchmark::State* state) {
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
@@ -130,14 +127,12 @@ static void EngineRequestMode(const std::string sql, MODE mode,
     std::ostringstream runner_oss;
     session.GetCompileInfo()->DumpClusterJob(runner_oss, "");
     LOG(INFO) << "runner plan:\n" << runner_oss.str() << std::endl;
-    std::unique_ptr<codec::RowView> row_view = std::unique_ptr<codec::RowView>(
-        new codec::RowView(session.GetSchema()));
+    std::unique_ptr<codec::RowView> row_view = std::unique_ptr<codec::RowView>(new codec::RowView(session.GetSchema()));
 
     switch (mode) {
         case BENCHMARK: {
             for (auto _ : *state) {
-                benchmark::DoNotOptimize(
-                    RunTableRequest(session, table, limit_cnt));
+                benchmark::DoNotOptimize(RunTableRequest(session, table, limit_cnt));
             }
             break;
         }
@@ -148,8 +143,8 @@ static void EngineRequestMode(const std::string sql, MODE mode,
     }
 }
 
-static void EngineBatchMode(const std::string sql, MODE mode, int64_t limit_cnt,
-                            int64_t size, benchmark::State* state) {
+static void EngineBatchMode(const std::string sql, MODE mode, int64_t limit_cnt, int64_t size,
+                            benchmark::State* state) {
     // prepare data into table
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
@@ -164,10 +159,7 @@ static void EngineBatchMode(const std::string sql, MODE mode, int64_t limit_cnt,
     switch (mode) {
         case BENCHMARK: {
             for (auto _ : *state) {
-                benchmark::DoNotOptimize(
-                    static_cast<
-                        const std::shared_ptr<hybridse::vm::DataHandler>>(
-                        session.Run()));
+                benchmark::DoNotOptimize(static_cast<const std::shared_ptr<hybridse::vm::DataHandler>>(session.Run()));
             }
             break;
         }
@@ -181,8 +173,7 @@ static void EngineBatchMode(const std::string sql, MODE mode, int64_t limit_cnt,
         }
     }
 }
-void EngineWindowSumFeature1ExcludeCurrentTime(benchmark::State* state,
-                                               MODE mode, int64_t limit_cnt,
+void EngineWindowSumFeature1ExcludeCurrentTime(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                                int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
@@ -195,8 +186,7 @@ void EngineWindowSumFeature1ExcludeCurrentTime(benchmark::State* state,
         std::to_string(limit_cnt) + ";";
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
-void EngineWindowSumFeature1(benchmark::State* state, MODE mode,
-                             int64_t limit_cnt, int64_t size) {  // NOLINT
+void EngineWindowSumFeature1(benchmark::State* state, MODE mode, int64_t limit_cnt, int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
         "SELECT "
@@ -208,8 +198,7 @@ void EngineWindowSumFeature1(benchmark::State* state, MODE mode,
         std::to_string(limit_cnt) + ";";
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
-void EngineWindowRowsSumFeature1(benchmark::State* state, MODE mode,
-                                 int64_t limit_cnt, int64_t size) {  // NOLINT
+void EngineWindowRowsSumFeature1(benchmark::State* state, MODE mode, int64_t limit_cnt, int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
         "SELECT "
@@ -221,8 +210,7 @@ void EngineWindowRowsSumFeature1(benchmark::State* state, MODE mode,
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineRunBatchWindowSumFeature1(benchmark::State* state, MODE mode,
-                                     int64_t limit_cnt,
+void EngineRunBatchWindowSumFeature1(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                      int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
@@ -236,8 +224,7 @@ void EngineRunBatchWindowSumFeature1(benchmark::State* state, MODE mode,
 
     EngineBatchMode(sql, mode, limit_cnt, size, state);
 }
-void EngineRunBatchWindowSumFeature5(benchmark::State* state, MODE mode,
-                                     int64_t limit_cnt,
+void EngineRunBatchWindowSumFeature5(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                      int64_t size) {  // NOLINT
     const std::string sql =
         "SELECT "
@@ -254,9 +241,8 @@ void EngineRunBatchWindowSumFeature5(benchmark::State* state, MODE mode,
     EngineBatchMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineRunBatchWindowSumFeature1ExcludeCurrentTime(
-    benchmark::State* state, MODE mode, int64_t limit_cnt,
-    int64_t size) {  // NOLINT
+void EngineRunBatchWindowSumFeature1ExcludeCurrentTime(benchmark::State* state, MODE mode, int64_t limit_cnt,
+                                                       int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
         "SELECT "
@@ -269,9 +255,8 @@ void EngineRunBatchWindowSumFeature1ExcludeCurrentTime(
 
     EngineBatchMode(sql, mode, limit_cnt, size, state);
 }
-void EngineRunBatchWindowSumFeature5ExcludeCurrentTime(
-    benchmark::State* state, MODE mode, int64_t limit_cnt,
-    int64_t size) {  // NOLINT
+void EngineRunBatchWindowSumFeature5ExcludeCurrentTime(benchmark::State* state, MODE mode, int64_t limit_cnt,
+                                                       int64_t size) {  // NOLINT
     const std::string sql =
         "SELECT "
         "sum(col1) OVER w1 as w1_col1_sum, "
@@ -286,8 +271,7 @@ void EngineRunBatchWindowSumFeature5ExcludeCurrentTime(
         std::to_string(limit_cnt) + ";";
     EngineBatchMode(sql, mode, limit_cnt, size, state);
 }
-void EngineRunBatchWindowSumFeature5Window5(benchmark::State* state, MODE mode,
-                                            int64_t limit_cnt,
+void EngineRunBatchWindowSumFeature5Window5(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                             int64_t size) {  // NOLINT
     const std::string sql =
         "SELECT "
@@ -309,8 +293,7 @@ void EngineRunBatchWindowSumFeature5Window5(benchmark::State* state, MODE mode,
         std::to_string(limit_cnt) + ";";
     EngineBatchMode(sql, mode, limit_cnt, size, state);
 }
-void EngineRunBatchWindowMultiAggWindow25Feature25(benchmark::State* state,
-                                                   MODE mode, int64_t limit_cnt,
+void EngineRunBatchWindowMultiAggWindow25Feature25(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                                    int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
@@ -390,8 +373,7 @@ void EngineRunBatchWindowMultiAggWindow25Feature25(benchmark::State* state,
     EngineBatchMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineWindowSumFeature5ExcludeCurrentTime(benchmark::State* state,
-                                               MODE mode, int64_t limit_cnt,
+void EngineWindowSumFeature5ExcludeCurrentTime(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                                int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
@@ -409,8 +391,7 @@ void EngineWindowSumFeature5ExcludeCurrentTime(benchmark::State* state,
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineWindowSumFeature5(benchmark::State* state, MODE mode,
-                             int64_t limit_cnt,
+void EngineWindowSumFeature5(benchmark::State* state, MODE mode, int64_t limit_cnt,
                              int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
@@ -428,8 +409,7 @@ void EngineWindowSumFeature5(benchmark::State* state, MODE mode,
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineWindowDistinctCntFeature(benchmark::State* state, MODE mode,
-                                    int64_t limit_cnt,
+void EngineWindowDistinctCntFeature(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                     int64_t size) {  // NOLINT
     const std::string sql =
         "SELECT "
@@ -445,8 +425,7 @@ void EngineWindowDistinctCntFeature(benchmark::State* state, MODE mode,
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineWindowTop1RatioFeature(benchmark::State* state, MODE mode,
-                                  int64_t limit_cnt,
+void EngineWindowTop1RatioFeature(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                   int64_t size) {  // NOLINT
     const std::string sql =
         "SELECT "
@@ -462,8 +441,7 @@ void EngineWindowTop1RatioFeature(benchmark::State* state, MODE mode,
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineWindowSumFeature5Window5(benchmark::State* state, MODE mode,
-                                    int64_t limit_cnt,
+void EngineWindowSumFeature5Window5(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                     int64_t size) {  // NOLINT
     const std::string sql =
         "SELECT "
@@ -485,8 +463,7 @@ void EngineWindowSumFeature5Window5(benchmark::State* state, MODE mode,
         std::to_string(limit_cnt) + ";";
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
-void EngineWindowMultiAggFeature5(benchmark::State* state, MODE mode,
-                                  int64_t limit_cnt,
+void EngineWindowMultiAggFeature5(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                   int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
@@ -528,8 +505,7 @@ void EngineWindowMultiAggFeature5(benchmark::State* state, MODE mode,
     EngineRequestMode(sql, mode, limit_cnt, size, state);
 }
 
-void EngineWindowMultiAggWindow25Feature25(benchmark::State* state, MODE mode,
-                                           int64_t limit_cnt,
+void EngineWindowMultiAggWindow25Feature25(benchmark::State* state, MODE mode, int64_t limit_cnt,
                                            int64_t size) {  // NOLINT
     // prepare data into table
     const std::string sql =
@@ -610,36 +586,31 @@ void EngineWindowMultiAggWindow25Feature25(benchmark::State* state, MODE mode,
 }
 void EngineSimpleSelectDouble(benchmark::State* state, MODE mode) {  // NOLINT
     const std::string sql = "SELECT col4 FROM t1 limit 2;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_basic_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_basic_one_row.yaml";
     EngineBatchModeSimpleQueryBM("db", sql, resource, state, mode);
 }
 
 void EngineSimpleSelectVarchar(benchmark::State* state, MODE mode) {  // NOLINT
     const std::string sql = "SELECT col6 FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_basic_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_basic_one_row.yaml";
     EngineBatchModeSimpleQueryBM("db", sql, resource, state, mode);
 }
 
 void EngineSimpleSelectTimestamp(benchmark::State* state,
                                  MODE mode) {  // NOLINT
     const std::string sql = "SELECT std_ts FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_with_time_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_with_time_one_row.yaml";
     EngineBatchModeSimpleQueryBM("db", sql, resource, state, mode);
 }
 
 void EngineSimpleSelectDate(benchmark::State* state, MODE mode) {  // NOLINT
     const std::string sql = "SELECT std_date FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_with_time_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_with_time_one_row.yaml";
     EngineBatchModeSimpleQueryBM("db", sql, resource, state, mode);
 }
 void EngineSimpleSelectInt32(benchmark::State* state, MODE mode) {  // NOLINT
     const std::string sql = "SELECT col1 FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_with_time_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_with_time_one_row.yaml";
     EngineBatchModeSimpleQueryBM("db", sql, resource, state, mode);
 }
 
@@ -647,16 +618,13 @@ void EngineSimpleUDF(benchmark::State* state, MODE mode) {  // NOLINT
     const std::string sql =
         "%%fun\ndef test(a:i32,b:i32):i32\n    c=a+b\n    d=c+1\n    return "
         "d\nend\n%%sql\nSELECT test(col1,col1) FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_basic_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_basic_one_row.yaml";
     EngineBatchModeSimpleQueryBM("db", sql, resource, state, mode);
 }
 
-void EngineRequestModeSimpleQueryBM(const std::string& db,
-                                    const std::string& query_table,
-                                    const std::string& sql, int32_t limit_cnt,
-                                    const std::string& resource_path,
-                                    benchmark::State* state, MODE mode) {
+void EngineRequestModeSimpleQueryBM(const std::string& db, const std::string& query_table, const std::string& sql,
+                                    int32_t limit_cnt, const std::string& resource_path, benchmark::State* state,
+                                    MODE mode) {
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
     type::TableDef table_def;
@@ -668,8 +636,7 @@ void EngineRequestModeSimpleQueryBM(const std::string& db,
     size = static_cast<uint32_t>(rows[0].size());
     table_def.set_catalog(db);
 
-    std::shared_ptr<::hybridse::storage::Table> table(
-        new ::hybridse::storage::Table(1, 1, table_def));
+    std::shared_ptr<::hybridse::storage::Table> table(new ::hybridse::storage::Table(1, 1, table_def));
     ASSERT_TRUE(table->Init());
     table->Put(reinterpret_cast<char*>(ptr), size);
     table->Put(reinterpret_cast<char*>(ptr), size);
@@ -688,22 +655,19 @@ void EngineRequestModeSimpleQueryBM(const std::string& db,
     switch (mode) {
         case BENCHMARK: {
             for (auto _ : *state) {
-                benchmark::DoNotOptimize(
-                    RunTableRequest(session, table_handler, limit_cnt));
+                benchmark::DoNotOptimize(RunTableRequest(session, table_handler, limit_cnt));
             }
             break;
         }
         case TEST: {
             session.EnableDebug();
-            ASSERT_EQ(limit_cnt,
-                      RunTableRequest(session, table_handler, limit_cnt));
+            ASSERT_EQ(limit_cnt, RunTableRequest(session, table_handler, limit_cnt));
             break;
         }
     }
 }
 
-void EngineBatchModeSimpleQueryBM(const std::string& db, const std::string& sql,
-                                  const std::string& resource_path,
+void EngineBatchModeSimpleQueryBM(const std::string& db, const std::string& sql, const std::string& resource_path,
                                   benchmark::State* state, MODE mode) {
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
@@ -711,14 +675,12 @@ void EngineBatchModeSimpleQueryBM(const std::string& db, const std::string& sql,
     int8_t* ptr = NULL;
     uint32_t size = 0;
     std::vector<Row> rows;
-    hybridse::sqlcase::CaseDataMock::LoadResource(resource_path, table_def,
-                                                  rows);
+    hybridse::sqlcase::CaseDataMock::LoadResource(resource_path, table_def, rows);
     ptr = rows[0].buf();
     size = static_cast<uint32_t>(rows[0].size());
     table_def.set_catalog(db);
 
-    std::shared_ptr<::hybridse::storage::Table> table(
-        new ::hybridse::storage::Table(1, 1, table_def));
+    std::shared_ptr<::hybridse::storage::Table> table(new ::hybridse::storage::Table(1, 1, table_def));
     ASSERT_TRUE(table->Init());
     table->Put(reinterpret_cast<char*>(ptr), size);
     table->Put(reinterpret_cast<char*>(ptr), size);
@@ -736,10 +698,7 @@ void EngineBatchModeSimpleQueryBM(const std::string& db, const std::string& sql,
         case BENCHMARK: {
             for (auto _ : *state) {
                 // use const value to avoid compiler bug for some version
-                benchmark::DoNotOptimize(
-                    static_cast<
-                        const std::shared_ptr<hybridse::vm::DataHandler>>(
-                        session.Run()));
+                benchmark::DoNotOptimize(static_cast<const std::shared_ptr<hybridse::vm::DataHandler>>(session.Run()));
             }
             break;
         }
@@ -756,23 +715,20 @@ void EngineBatchModeSimpleQueryBM(const std::string& db, const std::string& sql,
 }
 void EngineRequestSimpleSelectDouble(benchmark::State* state, MODE mode) {
     const std::string sql = "SELECT col4 FROM t1 limit 2;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_basic_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_basic_one_row.yaml";
     EngineRequestModeSimpleQueryBM("db", "t1", sql, 2, resource, state, mode);
 }
 void EngineRequestSimpleSelectVarchar(benchmark::State* state,
                                       MODE mode) {  // NOLINT
     const std::string sql = "SELECT col6 FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_basic_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_basic_one_row.yaml";
     EngineRequestModeSimpleQueryBM("db", "t1", sql, 1, resource, state, mode);
 }
 
 void EngineRequestSimpleSelectInt32(benchmark::State* state,
                                     MODE mode) {  // NOLINT
     const std::string sql = "SELECT col1 FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_basic_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_basic_one_row.yaml";
     EngineRequestModeSimpleQueryBM("db", "t1", sql, 1, resource, state, mode);
 }
 
@@ -780,37 +736,30 @@ void EngineRequestSimpleUDF(benchmark::State* state, MODE mode) {  // NOLINT
     const std::string sql =
         "%%fun\ndef test(a:i32,b:i32):i32\n    c=a+b\n    d=c+1\n    return "
         "d\nend\n%%sql\nSELECT test(col1,col1) FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_basic_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_basic_one_row.yaml";
     EngineRequestModeSimpleQueryBM("db", "t1", sql, 1, resource, state, mode);
 }
 
 void EngineRequestSimpleSelectTimestamp(benchmark::State* state,
                                         MODE mode) {  // NOLINT
     const std::string sql = "SELECT std_ts FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_with_time_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_with_time_one_row.yaml";
     EngineRequestModeSimpleQueryBM("db", "t1", sql, 1, resource, state, mode);
 }
 
 void EngineRequestSimpleSelectDate(benchmark::State* state,
                                    MODE mode) {  // NOLINT
     const std::string sql = "SELECT std_date FROM t1 limit 1;";
-    const std::string resource =
-        "cases/resource/benchmark_t1_with_time_one_row.yaml";
+    const std::string resource = "cases/resource/benchmark_t1_with_time_one_row.yaml";
     EngineRequestModeSimpleQueryBM("db", "t1", sql, 1, resource, state, mode);
 }
-hybridse::sqlcase::SqlCase LoadSqlCaseWithID(const std::string& yaml,
-                                             const std::string& case_id) {
-    return hybridse::sqlcase::SqlCase::LoadSqlCaseWithID(
-        hybridse::sqlcase::FindSqlCaseBaseDirPath(), yaml, case_id);
+hybridse::sqlcase::SqlCase LoadSqlCaseWithID(const std::string& yaml, const std::string& case_id) {
+    return hybridse::sqlcase::SqlCase::LoadSqlCaseWithID(hybridse::sqlcase::FindSqlCaseBaseDirPath(), yaml, case_id);
 }
-void EngineBenchmarkOnCase(const std::string& yaml_path,
-                           const std::string& case_id,
-                           vm::EngineMode engine_mode,
+void EngineBenchmarkOnCase(const std::string& yaml_path, const std::string& case_id, vm::EngineMode engine_mode,
                            benchmark::State* state) {
-    SqlCase target_case = hybridse::sqlcase::SqlCase::LoadSqlCaseWithID(
-        hybridse::sqlcase::FindSqlCaseBaseDirPath(), yaml_path, case_id);
+    SqlCase target_case =
+        hybridse::sqlcase::SqlCase::LoadSqlCaseWithID(hybridse::sqlcase::FindSqlCaseBaseDirPath(), yaml_path, case_id);
     if (target_case.id() != case_id) {
         LOG(WARNING) << "Fail to find case #" << case_id << " in " << yaml_path;
         state->SkipWithError("BENCHMARK CASE LOAD FAIL: fail to find case");
@@ -819,8 +768,7 @@ void EngineBenchmarkOnCase(const std::string& yaml_path,
     EngineBenchmarkOnCase(target_case, engine_mode, state);
 }
 void EngineBenchmarkOnCase(hybridse::sqlcase::SqlCase& sql_case,  // NOLINT
-                           vm::EngineMode engine_mode,
-                           benchmark::State* state) {
+                           vm::EngineMode engine_mode, benchmark::State* state) {
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
 
@@ -828,8 +776,7 @@ void EngineBenchmarkOnCase(hybridse::sqlcase::SqlCase& sql_case,  // NOLINT
 
     vm::EngineOptions engine_options;
     if (engine_mode == vm::kBatchRequestMode) {
-        engine_options.set_batch_request_optimized(
-            sql_case.batch_request_optimized_);
+        engine_options.set_batch_request_optimized(sql_case.batch_request_optimized_);
     }
     if (hybridse::sqlcase::SqlCase::IsCluster()) {
         engine_options.set_cluster_optimized(true);
@@ -843,16 +790,14 @@ void EngineBenchmarkOnCase(hybridse::sqlcase::SqlCase& sql_case,  // NOLINT
     }
     std::unique_ptr<vm::EngineTestRunner> engine_runner;
     if (engine_mode == vm::kBatchMode) {
-        engine_runner = std::unique_ptr<vm::BatchEngineTestRunner>(
-            new vm::ToydbBatchEngineTestRunner(sql_case, engine_options));
+        engine_runner =
+            std::unique_ptr<vm::BatchEngineTestRunner>(new vm::ToydbBatchEngineTestRunner(sql_case, engine_options));
     } else if (engine_mode == vm::kRequestMode) {
         engine_runner = std::unique_ptr<vm::RequestEngineTestRunner>(
             new vm::ToydbRequestEngineTestRunner(sql_case, engine_options));
     } else {
-        engine_runner = std::unique_ptr<vm::BatchRequestEngineTestRunner>(
-            new vm::ToydbBatchRequestEngineTestRunner(
-                sql_case, engine_options,
-                sql_case.batch_request().common_column_indices_));
+        engine_runner = std::unique_ptr<vm::BatchRequestEngineTestRunner>(new vm::ToydbBatchRequestEngineTestRunner(
+            sql_case, engine_options, sql_case.batch_request().common_column_indices_));
     }
     if (SqlCase::IsDebug()) {
         LOG(INFO) << "BENCHMARK CASE TEST: BEGIN";
@@ -885,8 +830,7 @@ void EngineBenchmarkOnCase(hybridse::sqlcase::SqlCase& sql_case,  // NOLINT
     std::vector<Row> output_rows;
     for (auto _ : *state) {
         output_rows.clear();
-        benchmark::DoNotOptimize(static_cast<const base::Status>(
-            engine_runner->Compute(&output_rows)));
+        benchmark::DoNotOptimize(static_cast<const base::Status>(engine_runner->Compute(&output_rows)));
     }
 }
 
