@@ -32,8 +32,6 @@ jobs:
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          install: true
 
       - name: Decide the Tag
         if: ${{ github.event_name == 'push' }}
@@ -52,11 +50,16 @@ jobs:
           # Use Docker `latest` tag convention
           [ "$VERSION" == "main" ] && VERSION=latest
 
-          echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
+
+          GHCR_TAG=$IMAGE_ID:$VERSION
+          DOCKERHUB_TAG=${{ secrets.DOCKERHUB_REPO }}/$IMAGE_NAME:$VERSION
+          echo "GitHub Docker Registry Tag: $GHCR_TAG"
+          echo "DockerHub Tag: $DOCKERHUB_TAG"
           echo "COMMIT=${{ github.sha }}"
 
-          echo "TAGS=$IMAGE_ID:$VERSION" >> $GITHUB_ENV
+          echo "GHCR_TAG=$GHCR_TAG" >> $GITHUB_ENV
+          echo "DOCKERHUB_TAG=$DOCKERHUB_TAG" >> $GITHUB_ENV
 
       - name: Decide Push
         run: |
@@ -82,4 +85,6 @@ jobs:
           context: docker
           push: ${{ env.PUSH }}
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.TAGS }}
+          tags: |
+            ${{ env.GHCR_TAG }}
+            ${{ env.DOCKERHUB_TAG }}
