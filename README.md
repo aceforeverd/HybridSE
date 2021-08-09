@@ -1,3 +1,5 @@
+# **Note: HyridSE has merged into [OpenMLDB](https://github.com/4paradigm/OpenMLDB)**
+
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/4paradigm/hybridse/HybridSE%20CI?style=flat-square)](https://github.com/4paradigm/HybridSE/actions/workflows/hybridse-ci.yml?query=branch%3Amain++)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/4paradigm/HybridSE?style=flat-square)](https://github.com/4paradigm/HybridSE/releases/latest)
 [![GitHub milestones](https://img.shields.io/github/milestones/open/4paradigm/hybridse?style=flat-square)](https://github.com/4paradigm/HybridSE/milestones)
